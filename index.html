@@ -1,31 +1,130 @@
-<!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | Unigram Payment</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  </head>
-  <body style="text-align: center; padding: 0; border: 0; margin: 0;">
-    <canvas id="unity-canvas" width=1080 height=1920 tabindex="-1" style="width: 1080px; height: 1920px; background: #000000"></canvas>
-    <script src="Build/Veittech-UnigramPayment-WebPage.loader.js"></script>
-    <script>
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Unity WebGL Player | Unigram Payment</title>
+  <style>
+    @font-face 
+    {
+      font-family: 'MyCustomFont';
+      src: url('Fonts/Tobi-Black.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
 
-        var canvas = document.querySelector("#unity-canvas");
-        canvas.style.width = 1080;
-        canvas.style.height = 1920;
-        canvas.style.position = "fixed";
+    body,
+    html 
+    {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #000;
+    }
 
-        document.body.style.textAlign = "left";
+    #unity-container,
+    #loading-screen 
+    {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #unity-container 
+    {
+      display: none;
+    }
+
+    #loading-screen 
+    {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #000;
+      color: white;
+      font-size: 30px;
+      font-family: 'MyCustomFont', sans-serif;
+      flex-direction: column;
+    }
+
+    .spinner 
+    {
+      border: 16px solid #f3f3f3;
+      border-top: 16px solid #3498db;
+      border-radius: 50%;
+      width: 120px;
+      height: 120px;
+      animation: spin 2s linear infinite;
+    }
+
+    .loading-text 
+    {
+      margin-top: 35px;
+      text-align: center;
+      width: 100%;
+    }
+
+    @keyframes spin 
+    {
+      0% 
+      {
+        transform: rotate(0deg);
       }
 
-      createUnityInstance(document.querySelector("#unity-canvas"), {
+      100% 
+      {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+
+<body>
+  <div id="loading-screen">
+    <div class="spinner"></div>
+    <div class="loading-text">Game is loading,<br>please wait...</div>
+  </div>
+  <div id="unity-container">
+    <canvas id="unity-canvas" width=1080 height=1920 style="width: 100%; height: 100%; background: #000000"></canvas>
+  </div>
+  <script src="Build/TonOpenLeague-MiniApps-Saunposium.loader.js"></script>
+  <script>
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) 
+    {
+      var meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+      document.getElementsByTagName('head')[0].appendChild(meta);
+
+      var canvas = document.querySelector("#unity-canvas");
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      canvas.style.position = "fixed";
+
+      document.body.style.textAlign = "left";
+    }
+
+    function onUnityLoaded() 
+    {
+      console.log("Unity instance successfully loaded");
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) 
+      {
+        Telegram.WebApp.expand();
+      }
+
+      console.log("Telegram web app has been expanded to full screen");
+
+      document.getElementById('loading-screen').style.display = 'none';
+      document.getElementById('unity-container').style.display = 'block';
+    }
+
+    createUnityInstance(document.querySelector("#unity-canvas"), {
         dataUrl: "Build/67bd59cd10b2bbb900896622f67b8b74.data.unityweb",
         frameworkUrl: "Build/0ef1c5b09f5991d19c447d97a1f32161.js.unityweb",
         codeUrl: "Build/e7778700382fa0e468d54030a46c7799.wasm.unityweb",
@@ -35,7 +134,21 @@
         productVersion: "1.0",
         // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
         // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
+      }).then((unityInstance) => 
+      {
+        onUnityLoaded();
+      }).catch((error) => 
+      {
+        console.error('Error loading Unity instance:', error);
       });
-    </script>
-  </body>
-</html>
+
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) 
+    {
+      // Initialize Web App
+      window.addEventListener('load', function () 
+      {
+        Telegram.WebApp.ready();
+      });
+    }
+  </script>
+</body>
