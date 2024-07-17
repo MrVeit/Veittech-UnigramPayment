@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -64,7 +67,7 @@
     .loading-text 
     {
       margin-top: 35px;
-      text-align: center;
+      text-align: center; 
       width: 100%;
     }
 
@@ -111,17 +114,10 @@
 
     function onUnityLoaded() 
     {
-      console.log("Unity instance successfully loaded");
-
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) 
-      {
-        Telegram.WebApp.expand();
-      }
-
-      console.log("Telegram web app has been expanded to full screen");
-
       document.getElementById('loading-screen').style.display = 'none';
       document.getElementById('unity-container').style.display = 'block';
+
+      console.log("Unity instance successfully loaded");
     }
 
     createUnityInstance(document.querySelector("#unity-canvas"), {
@@ -142,13 +138,16 @@
         console.error('Error loading Unity instance:', error);
       });
 
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) 
+    // Initialize Web App
+    window.addEventListener('load', function () 
     {
-      // Initialize Web App
-      window.addEventListener('load', function () 
-      {
-        Telegram.WebApp.ready();
-      });
-    }
+      Telegram.WebApp.ready();
+
+      Telegram.WebApp.expand();
+
+      console.log("Telegram web app has been expanded to full screen");
+    });
   </script>
 </body>
+  
+</html>
