@@ -21,6 +21,8 @@ namespace UnigramPayment.Core
         private const string HEADER_VALUE_APPLICATION_JSON = WebRequestUtils.HEADER_VALUE_APPLICATION_JSON;
         private const string HEADER_VALUE_TEXT_PLAIN = WebRequestUtils.HEADER_VALUE_TEXT_PLAIN;
 
+        private static readonly string API_SERVER_LINK = UnigramPaymentSDK.Instance.ApiServerUrl;
+
         public static IEnumerator AuthorizeClient(
             RuntimeAPIConfig apiConfig, Action<string> authorizationTokenClaimed)
         {
@@ -45,11 +47,13 @@ namespace UnigramPayment.Core
                 yield break;
             }
 
-            var authorizationLink = APIServerRequests.GetAuthorizationLink(apiConfig.ServerUrl);
+            var clientSecret = UnigramPaymentSDK.Instance.ClientSecretKey;
+
+            var authorizationLink = APIServerRequests.GetAuthorizationLink(API_SERVER_LINK);
 
             using (UnityWebRequest request = new(authorizationLink, POST_RESPONSE))
             {
-                var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(apiConfig.ClientSecretKey);
+                var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(clientSecret);
 
                 WebRequestUtils.SetUploadHandler(request, WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
@@ -84,14 +88,12 @@ namespace UnigramPayment.Core
         public static IEnumerator CreateInvoice(SaleableItem product,
             Action<string> invoiceLinkCreated)
         {
-            string apiServerLink = RuntimeAPIConfig.Load().ServerUrl;
-
             if (!IsExistServerLink())
             {
                 yield break;
             }
 
-            string url = APIServerRequests.GetInvoiceLink(apiServerLink);
+            string url = APIServerRequests.GetInvoiceLink(API_SERVER_LINK);
 
             var invoice = new InvoiceData()
             {
@@ -151,14 +153,12 @@ namespace UnigramPayment.Core
         public static IEnumerator RefundPayment(int buyerId,
             string transactionId, Action<bool> refundProcessFinished)
         {
-            var apiServerLink = RuntimeAPIConfig.Load().ServerUrl;
-
             if (!IsExistServerLink())
             {
                 yield break;
             }
 
-            var url = APIServerRequests.GetRefundStarsLink(apiServerLink);
+            var url = APIServerRequests.GetRefundStarsLink(API_SERVER_LINK);
 
             var refundData = new RefundProcessData()
             {
@@ -212,14 +212,12 @@ namespace UnigramPayment.Core
 
         public static IEnumerator GetPaymentReceipt(Action<PaymentReceiptData> paymentReceiptClaimed)
         {
-            var apiServerLink = RuntimeAPIConfig.Load().ServerUrl;
-
             if (!IsExistServerLink())
             {
                 yield break;
             }
 
-            var url = APIServerRequests.GetPaymentReceiptLink(apiServerLink);
+            var url = APIServerRequests.GetPaymentReceiptLink(API_SERVER_LINK);
 
             var jwtToken = UnigramPaymentSDK.Instance.JwtToken;
 
@@ -276,9 +274,10 @@ namespace UnigramPayment.Core
                 return false;
             }
 
-            var config = RuntimeAPIConfig.Load();
+            //var config = RuntimeAPIConfig.Load();
+            var apiLink = UnigramPaymentSDK.Instance.ApiServerUrl;
 
-            if (string.IsNullOrEmpty(config.ServerUrl))
+            if (string.IsNullOrEmpty(apiLink))
             {
                 UnigramPaymentLogger.LogError("No link to a valid api server was found, please fill in the required data and try again later.");
 
@@ -295,9 +294,10 @@ namespace UnigramPayment.Core
                 return false;
             }
 
-            var config = RuntimeAPIConfig.Load();
+            //var config = RuntimeAPIConfig.Load();
+            var clentSecret = UnigramPaymentSDK.Instance.ClientSecretKey;
 
-            if (string.IsNullOrEmpty(config.ClientSecretKey))
+            if (string.IsNullOrEmpty(clentSecret))
             {
                 UnigramPaymentLogger.LogError("No client secret key value was found for api server requests," +
                     " fill in the required data and try again later.");

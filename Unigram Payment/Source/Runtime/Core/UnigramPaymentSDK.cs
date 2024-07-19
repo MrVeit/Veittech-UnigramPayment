@@ -42,8 +42,12 @@ namespace UnigramPayment.Runtime.Core
         }
 
         [Header("SDK Settings"), Space]
+        [Tooltip("A link to your api server, with which the Unity application will communicate to make payments (for a production build to the server, you must have a domain and a certificate to connect over HTTPS)")]
+        [SerializeField] private string _apiServerUrl;
+        [Tooltip("A client  secret key that knows the Unity application and API server to verify the signature and allow access to the API.")]
+        [SerializeField] private string _clientSecretKey;
         [Tooltip("Enable if you want to activate SDK logging for detailed analysis")]
-        [SerializeField] private bool _debugMode;
+        [SerializeField, Space] private bool _debugMode;
         [Tooltip("Turn it off if you want to do your own cdk initialization in your scripts")]
         [SerializeField] private bool _initializeOnAwake;
         [Tooltip("Store all items for purchase, to add new ones call 'Create -> Unigram Payment -> Saleable Item' and add it to the list.")]
@@ -54,6 +58,9 @@ namespace UnigramPayment.Runtime.Core
         public string JwtToken { get; private set; }
         public string LastInvoiceLink { get; private set; }
         public string LastRefundedTransaction { get; private set; }
+
+        public string ClientSecretKey => _clientSecretKey;
+        public string ApiServerUrl => _apiServerUrl;
 
         public bool IsDebugMode => _debugMode;
 

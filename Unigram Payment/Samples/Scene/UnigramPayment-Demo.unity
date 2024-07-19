@@ -882,6 +882,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5202191579620558129, guid: ca8c6034c648a23408b744d0eedf88cb, type: 3}
+      propertyPath: _apiServerUrl
+      value: https://benizon.shop
+      objectReference: {fileID: 0}
+    - target: {fileID: 5202191579620558129, guid: ca8c6034c648a23408b744d0eedf88cb, type: 3}
+      propertyPath: _clientSecretKey
+      value: test_unity_unigram
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
