@@ -6,14 +6,6 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>Unity WebGL Player | Unigram Payment</title>
   <style>
-    @font-face 
-    {
-      font-family: 'MyCustomFont';
-      src: url('Fonts/Tobi-Black.ttf') format('truetype');
-      font-weight: normal;
-      font-style: normal;
-    }
-
     body,
     html 
     {
@@ -90,7 +82,7 @@
 <body>
   <div id="loading-screen">
     <div class="spinner"></div>
-    <div class="loading-text">Game is loading,<br>please wait...</div>
+    <div class="loading-text">App is loading,<br>please wait...</div>
   </div>
   <div id="unity-container">
     <canvas id="unity-canvas" width=1080 height=1920 style="width: 100%; height: 100%; background: #000000"></canvas>
@@ -121,9 +113,9 @@
     }
 
     createUnityInstance(document.querySelector("#unity-canvas"), {
-        dataUrl: "Build/67bd59cd10b2bbb900896622f67b8b74.data.unityweb",
-        frameworkUrl: "Build/0ef1c5b09f5991d19c447d97a1f32161.js.unityweb",
-        codeUrl: "Build/e7778700382fa0e468d54030a46c7799.wasm.unityweb",
+        dataUrl: "Build/764e4da535b7aef4c789d7a6899e7565.data.unityweb",
+        frameworkUrl: "Build/0f9c7766c738ed1b2002f394ff6dcde2.js.unityweb",
+        codeUrl: "Build/a1942793790ef78da177ff7af2879cf4.wasm.unityweb",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Veittech",
         productName: "Unigram Payment",
