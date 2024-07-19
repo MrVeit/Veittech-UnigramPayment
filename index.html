@@ -2,80 +2,12 @@
 <html lang="en-us">
 
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>Unity WebGL Player | Unigram Payment</title>
-  <style>
-    body,
-    html 
-    {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #000;
-    }
-
-    #unity-container,
-    #loading-screen 
-    {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    #unity-container 
-    {
-      display: none;
-    }
-
-    #loading-screen 
-    {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #000;
-      color: white;
-      font-size: 30px;
-      font-family: 'MyCustomFont', sans-serif;
-      flex-direction: column;
-    }
-
-    .spinner 
-    {
-      border: 16px solid #f3f3f3;
-      border-top: 16px solid #3498db;
-      border-radius: 50%;
-      width: 120px;
-      height: 120px;
-      animation: spin 2s linear infinite;
-    }
-
-    .loading-text 
-    {
-      margin-top: 35px;
-      text-align: center; 
-      width: 100%;
-    }
-
-    @keyframes spin 
-    {
-      0% 
-      {
-        transform: rotate(0deg);
-      }
-
-      100% 
-      {
-        transform: rotate(360deg);
-      }
-    }
-  </style>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes" />
+  <title>Unigram Payment</title>
+  <link rel="stylesheet" href="TemplateData/style.css" />
+  <link rel="stylesheet" href="style.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 
@@ -108,20 +40,18 @@
     {
       document.getElementById('loading-screen').style.display = 'none';
       document.getElementById('unity-container').style.display = 'block';
-
       console.log("Unity instance successfully loaded");
     }
 
-    createUnityInstance(document.querySelector("#unity-canvas"), {
-        dataUrl: "Build/764e4da535b7aef4c789d7a6899e7565.data.unityweb",
-        frameworkUrl: "Build/0f9c7766c738ed1b2002f394ff6dcde2.js.unityweb",
-        codeUrl: "Build/a1942793790ef78da177ff7af2879cf4.wasm.unityweb",
+    createUnityInstance(document.querySelector("#unity-canvas"), 
+    {
+        dataUrl: "Build/d09ac52dba04ccb588e752225b144c24.data.unityweb",
+        frameworkUrl: "Build/283143db6b470128c0cabfeec2d22011.js.unityweb",
+        codeUrl: "Build/20535cf9fd7b2fe61bd319b7c80dcc60.wasm.unityweb",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Veittech",
         productName: "Unigram Payment",
         productVersion: "1.0",
-        // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
-        // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
       }).then((unityInstance) => 
       {
         onUnityLoaded();
@@ -130,11 +60,9 @@
         console.error('Error loading Unity instance:', error);
       });
 
-    // Initialize Web App
     window.addEventListener('load', function () 
     {
       Telegram.WebApp.ready();
-
       Telegram.WebApp.expand();
 
       console.log("Telegram web app has been expanded to full screen");
