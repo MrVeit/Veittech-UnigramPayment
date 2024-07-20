@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes" />
+  <title>{{{ PRODUCT_NAME }}}</title>
+  <link rel="stylesheet" href="TemplateData/style.css" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+
+<body>
+  <div id="loading-screen">
+    <div class="spinner"></div>
+    <div class="loading-text">App is loading,<br>please wait...</div>
+  </div>
+  <div id="unity-container">
+    <canvas id="unity-canvas" width=1080 height=1920 style="width: 100%; height: 100%; background: #000000"></canvas>
+  </div>
+  <script src="Build/{{{ LOADER_FILENAME }}}"></script>
+  <script>
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) 
+    {
+      var meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+      document.getElementsByTagName('head')[0].appendChild(meta);
+
+      var canvas = document.querySelector("#unity-canvas");
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      canvas.style.position = "fixed";
+
+      document.body.style.textAlign = "left";
+    }
+
+    function onUnityLoaded() 
+    {
+      document.getElementById('loading-screen').style.display = 'none';
+      document.getElementById('unity-container').style.display = 'block';
+
+      console.log("[Unigram Payment] Unity instance successfully loaded");
+    }
+
+    createUnityInstance(document.querySelector("#unity-canvas"), 
+    {
+        dataUrl: "Build/{{{ DATA_FILENAME }}}",
+        frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
+        codeUrl: "Build/{{{ CODE_FILENAME }}}",
+#if MEMORY_FILENAME
+        memoryUrl: "Build/{{{ MEMORY_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+        symbolsUrl: "Build/{{{ SYMBOLS_FILENAME }}}",
+#endif
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "{{{ COMPANY_NAME }}}",
+        productName: "{{{ PRODUCT_NAME }}}",
+        productVersion: "{{{ PRODUCT_VERSION }}}",
+      }).then((unityInstance) => 
+      {
+        onUnityLoaded();
+      }).catch((error) => 
+      {
+        console.error('Error loading Unity instance:', error);
+      });
+
+    window.addEventListener('load', function () 
+    {
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand();
+
+      console.log("[Unigram Payment] Telegram web app has been expanded to full screen");
+    });
+  </script>
+</body>
+  
+</html>
