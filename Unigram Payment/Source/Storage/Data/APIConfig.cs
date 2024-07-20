@@ -27,6 +27,9 @@ namespace UnigramPayment.Storage.Data
 
                 _instance = InternalStorageUtils.Target<APIConfig>.CreateInstance();
 
+                _instance._clientSecretKey = EditorConsts.BASE_CLIENT_SECRET_KEY;
+                _instance._serverUrl = EditorConsts.BASE_API_URL;
+
                 InternalStorageUtils.CreateAsset(_instance, FULL_PATH);
 
                 return _instance;

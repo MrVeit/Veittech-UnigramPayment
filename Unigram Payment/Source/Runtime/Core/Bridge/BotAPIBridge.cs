@@ -6,12 +6,12 @@ using UnigramPayment.Runtime.Core;
 using UnigramPayment.Runtime.Data;
 using UnigramPayment.Runtime.Common;
 using UnigramPayment.Runtime.Utils;
-using UnigramPayment.Storage.Data;
 using UnigramPayment.Runtime.Utils.Debugging;
+using UnigramPayment.Storage.Data;
 
 namespace UnigramPayment.Core
 {
-    public static class BotAPIBridge
+    internal static class BotAPIBridge
     {
         private const string POST_RESPONSE = UnityWebRequest.kHttpVerbPOST;
 
@@ -21,10 +21,12 @@ namespace UnigramPayment.Core
         private const string HEADER_VALUE_APPLICATION_JSON = WebRequestUtils.HEADER_VALUE_APPLICATION_JSON;
         private const string HEADER_VALUE_TEXT_PLAIN = WebRequestUtils.HEADER_VALUE_TEXT_PLAIN;
 
-        private static readonly string API_SERVER_LINK = UnigramPaymentSDK.Instance.ApiServerUrl;
+        private static readonly RuntimeAPIConfig RUNTIME_STORAGE = RuntimeAPIConfig.Load();
 
-        public static IEnumerator AuthorizeClient(
-            RuntimeAPIConfig apiConfig, Action<string> authorizationTokenClaimed)
+        private static readonly string API_SECRET_KEY = RUNTIME_STORAGE.ClientSecretKey;
+        private static readonly string API_SERVER_LINK = RUNTIME_STORAGE.ServerUrl;
+
+        internal static IEnumerator AuthorizeClient(Action<string> authorizationTokenClaimed)
         {
             if (!IsExistProjectConfig())
             {
@@ -47,13 +49,11 @@ namespace UnigramPayment.Core
                 yield break;
             }
 
-            var clientSecret = UnigramPaymentSDK.Instance.ClientSecretKey;
-
             var authorizationLink = APIServerRequests.GetAuthorizationLink(API_SERVER_LINK);
 
             using (UnityWebRequest request = new(authorizationLink, POST_RESPONSE))
             {
-                var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(clientSecret);
+                var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(API_SECRET_KEY);
 
                 WebRequestUtils.SetUploadHandler(request, WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
@@ -85,7 +85,7 @@ namespace UnigramPayment.Core
             }
         }
 
-        public static IEnumerator CreateInvoice(SaleableItem product,
+        internal static IEnumerator CreateInvoice(SaleableItem product,
             Action<string> invoiceLinkCreated)
         {
             if (!IsExistServerLink())
@@ -103,7 +103,6 @@ namespace UnigramPayment.Core
                 Amount = product.Price
             };
 
-            var jwtToken = UnigramPaymentSDK.Instance.JwtToken;
             string jsonPayload = JsonConvert.SerializeObject(invoice);
 
             UnigramPaymentLogger.Log($"Product data for purchase: {jsonPayload}");
@@ -117,7 +116,7 @@ namespace UnigramPayment.Core
 
                 WebRequestUtils.SetRequestHeader(request, HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
                 WebRequestUtils.SetRequestHeader(request, HEADER_AUTHORIZATION,
-                    WebRequestUtils.GetAuthorizationHeaderValue(jwtToken));
+                    WebRequestUtils.GetAuthorizationHeaderValue(GetSessionToken()));
 
                 yield return request.SendWebRequest();
 
@@ -150,7 +149,7 @@ namespace UnigramPayment.Core
             }
         }
 
-        public static IEnumerator RefundPayment(int buyerId,
+        internal static IEnumerator RefundPayment(int buyerId,
             string transactionId, Action<bool> refundProcessFinished)
         {
             if (!IsExistServerLink())
@@ -166,7 +165,6 @@ namespace UnigramPayment.Core
                 TransactionId = transactionId,
             };
 
-            var jwtToken = UnigramPaymentSDK.Instance.JwtToken;
             string jsonRefund = JsonConvert.SerializeObject(refundData);
 
             using (UnityWebRequest request = new(url, POST_RESPONSE))
@@ -178,7 +176,7 @@ namespace UnigramPayment.Core
 
                 WebRequestUtils.SetRequestHeader(request, HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
                 WebRequestUtils.SetRequestHeader(request, HEADER_AUTHORIZATION,
-                    WebRequestUtils.GetAuthorizationHeaderValue(jwtToken));
+                    WebRequestUtils.GetAuthorizationHeaderValue(GetSessionToken()));
 
                 yield return request.SendWebRequest();
 
@@ -210,7 +208,7 @@ namespace UnigramPayment.Core
             }
         }
 
-        public static IEnumerator GetPaymentReceipt(Action<PaymentReceiptData> paymentReceiptClaimed)
+        internal static IEnumerator GetPaymentReceipt(Action<PaymentReceiptData> paymentReceiptClaimed)
         {
             if (!IsExistServerLink())
             {
@@ -219,14 +217,12 @@ namespace UnigramPayment.Core
 
             var url = APIServerRequests.GetPaymentReceiptLink(API_SERVER_LINK);
 
-            var jwtToken = UnigramPaymentSDK.Instance.JwtToken;
-
             using (UnityWebRequest request = new(url, UnityWebRequest.kHttpVerbGET))
             {
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
 
                 WebRequestUtils.SetRequestHeader(request, HEADER_AUTHORIZATION,
-                    WebRequestUtils.GetAuthorizationHeaderValue(jwtToken));
+                    WebRequestUtils.GetAuthorizationHeaderValue(GetSessionToken()));
 
                 yield return request.SendWebRequest();
 
@@ -267,6 +263,18 @@ namespace UnigramPayment.Core
             }
         }
 
+        private static string GetSessionToken()
+        {
+            string token = UnigramPaymentSDK.Instance.JwtToken;
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return null;
+            }
+
+            return token;
+        }
+
         private static bool IsExistServerLink()
         {
             if (!IsExistProjectConfig())
@@ -274,10 +282,7 @@ namespace UnigramPayment.Core
                 return false;
             }
 
-            //var config = RuntimeAPIConfig.Load();
-            var apiLink = UnigramPaymentSDK.Instance.ApiServerUrl;
-
-            if (string.IsNullOrEmpty(apiLink))
+            if (string.IsNullOrEmpty(API_SERVER_LINK))
             {
                 UnigramPaymentLogger.LogError("No link to a valid api server was found, please fill in the required data and try again later.");
 
@@ -294,10 +299,7 @@ namespace UnigramPayment.Core
                 return false;
             }
 
-            //var config = RuntimeAPIConfig.Load();
-            var clentSecret = UnigramPaymentSDK.Instance.ClientSecretKey;
-
-            if (string.IsNullOrEmpty(clentSecret))
+            if (string.IsNullOrEmpty(API_SECRET_KEY))
             {
                 UnigramPaymentLogger.LogError("No client secret key value was found for api server requests," +
                     " fill in the required data and try again later.");
@@ -310,9 +312,7 @@ namespace UnigramPayment.Core
 
         private static bool IsExistProjectConfig()
         {
-            var config = RuntimeAPIConfig.Load();
-
-            if (config == null)
+            if (RUNTIME_STORAGE == null)
             {
                 UnigramPaymentLogger.LogError("API server configuration is not detected, " +
                     "to configure it go to the 'Unigram Payment -> API Config' window and fill in the required data.");

@@ -4,9 +4,9 @@ using TMPro;
 using UnigramPayment.Runtime.Core;
 using UnigramPayment.Runtime.Data;
 
-namespace UnigramPayment.Demo
+namespace TestExample
 {
-    public sealed class TestTemplate : MonoBehaviour
+    public sealed class TestUnigramPaymentTemplate : MonoBehaviour
     {
         [SerializeField, Space] private UnigramPaymentSDK _unigramPayment;
         [SerializeField, Space] private TextMeshProUGUI _debugBar;
@@ -110,6 +110,9 @@ namespace UnigramPayment.Demo
         {
             _debugBar.text = $"{DEBUG_PREFIX} The session token, to connect to the server API," +
                 $" has been successfully updated.: {_unigramPayment.JwtToken}";
+
+            SetInteractableStateByButton(_createInvoiceButton, true);
+            SetInteractableStateByButton(_refundStarsButton, false);
         }
 
         private void PaymentInvoiceCreated(string url)

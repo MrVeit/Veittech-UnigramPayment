@@ -15,5 +15,8 @@ namespace UnigramPayment.Storage.Common
 
         public const string RUNTIME_API_CONFIG_FULL_PATH = "Assets/Resources/Unigram Payment";
         public const string RUNTIME_API_CONFIG_SHORT_PATH = "Unigram Payment/";
+
+        public const string BASE_API_URL = "http://localhost:1000";
+        public const string BASE_CLIENT_SECRET_KEY = "YOUR_SECRET_KEY";
     }
 }

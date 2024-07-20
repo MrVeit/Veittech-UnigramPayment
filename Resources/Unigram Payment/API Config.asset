@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 812dbdcf5affb2747a4de1dbaec97743, type: 3}
   m_Name: API Config
   m_EditorClassIdentifier: 
-  <ClientSecretKey>k__BackingField: 
-  <ServerUrl>k__BackingField: 
+  <ClientSecretKey>k__BackingField: test_unity_unigram
+  <ServerUrl>k__BackingField: https://api.benizon.shop

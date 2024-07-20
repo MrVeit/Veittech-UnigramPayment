@@ -6,9 +6,18 @@ namespace UnigramPayment.Editor.ConfigWindow
 {
     public sealed class APIConfigWindow : EditorWindow
     {
-        private void OnEnable()
+        private APIConfig _editorStorage => APIConfig.Instance;
+
+        private string _editorSecretKey
         {
-            var data = RuntimeAPIConfig.Instance;
+            get => APIConfig.Instance.SecretKey;
+            set => APIConfig.Instance.SecretKey = value;
+        }
+
+        private string _editorApiUrl
+        {
+            get => APIConfig.Instance.ServerUrl;
+            set => APIConfig.Instance.ServerUrl = value;
         }
 
         private void OnDestroy()
@@ -33,14 +42,12 @@ namespace UnigramPayment.Editor.ConfigWindow
             EditorGUILayout.BeginVertical();
 
             EditorGUILayout.LabelField("Client Secret Key:", GUILayout.Width(200));
-            APIConfig.Instance.SecretKey = GUILayout.TextField(
-                APIConfig.Instance.SecretKey, 30, GUILayout.MaxWidth(490));
+            _editorSecretKey = GUILayout.TextField(_editorSecretKey, 30, GUILayout.MaxWidth(position.width - 15));
 
             GUILayout.Space(5);
 
             EditorGUILayout.LabelField("Server Url:", GUILayout.Width(200));
-            APIConfig.Instance.ServerUrl = GUILayout.TextField(
-                APIConfig.Instance.ServerUrl, GUILayout.MaxWidth(490));
+            _editorApiUrl = GUILayout.TextField(_editorApiUrl, GUILayout.MaxWidth(position.width - 15));
 
             GUILayout.Space(5);
 
@@ -55,7 +62,7 @@ namespace UnigramPayment.Editor.ConfigWindow
 
             config.titleContent = new GUIContent("Project API Config");
             config.minSize = new Vector2(500, 150);
-            config.maxSize = new Vector2(500, 150);
+            config.maxSize = new Vector2(750, 150);
 
             config.Show();
         }
@@ -115,8 +122,8 @@ namespace UnigramPayment.Editor.ConfigWindow
         {
             var storage = RuntimeAPIConfig.Load();
 
-            storage.ClientSecretKey = APIConfig.Instance.SecretKey;
-            storage.ServerUrl = APIConfig.Instance.ServerUrl;
+            storage.ClientSecretKey = _editorSecretKey;
+            storage.ServerUrl = _editorApiUrl;
 
             RuntimeAPIConfig.SaveAsync();
 
