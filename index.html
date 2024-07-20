@@ -7,7 +7,6 @@
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes" />
   <title>Unigram Payment</title>
   <link rel="stylesheet" href="TemplateData/style.css" />
-  <link rel="stylesheet" href="TemplateData/style.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 
@@ -40,14 +39,15 @@
     {
       document.getElementById('loading-screen').style.display = 'none';
       document.getElementById('unity-container').style.display = 'block';
-      console.log("Unity instance successfully loaded");
+
+      console.log("[Unigram Payment] Unity instance successfully loaded");
     }
 
     createUnityInstance(document.querySelector("#unity-canvas"), 
     {
-        dataUrl: "Build/d09ac52dba04ccb588e752225b144c24.data.unityweb",
-        frameworkUrl: "Build/283143db6b470128c0cabfeec2d22011.js.unityweb",
-        codeUrl: "Build/20535cf9fd7b2fe61bd319b7c80dcc60.wasm.unityweb",
+        dataUrl: "Build/cbfce7986dc52de06dd28d6f761a2c79.data.unityweb",
+        frameworkUrl: "Build/539eeb46018cf7478a8e88b30080b90d.js.unityweb",
+        codeUrl: "Build/7b0e3961c0c68594b2474eded8f6ab2b.wasm.unityweb",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Veittech",
         productName: "Unigram Payment",
@@ -65,7 +65,7 @@
       Telegram.WebApp.ready();
       Telegram.WebApp.expand();
 
-      console.log("Telegram web app has been expanded to full screen");
+      console.log("[Unigram Payment] Telegram web app has been expanded to full screen");
     });
   </script>
 </body>
