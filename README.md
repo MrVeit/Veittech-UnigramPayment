@@ -1,7 +1,7 @@
 # UNIGRAM PAYMENT
 
-[![License](https://img.shields.io/github/license/mrveit/veittech-unigrampayment?color=318CE7&style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/github/package-json/v/mrveit/veittech-unigrampayment?color=318CE7&style=flat-square)](package.json)
+[![License](https://img.shields.io/github/license/MrVeit/Veittech-UnigramPayment?color=318CE7&style=flat-square)](LICENSE)
+[![Version](https://img.shields.io/github/package-json/v/MrVeit/Veittech-UnigramPayment?color=318CE7&style=flat-square)](package.json)
 [![Unity](https://img.shields.io/badge/Unity-2020.1+-2296F3.svg?color=318CE7&style=flat-square)](https://unity.com/releases/editor/archive)
 
 # Technical Demo
