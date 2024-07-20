@@ -4,6 +4,8 @@
 [![Version](https://img.shields.io/github/package-json/v/MrVeit/Veittech-UnigramPayment?color=318CE7&style=flat-square)](package.json)
 [![Unity](https://img.shields.io/badge/Unity-2020.1+-2296F3.svg?color=318CE7&style=flat-square)](https://unity.com/releases/editor/archive)
 
+**UNIGRAM PAYMENT** is a convenient solution for creating purchases in your Unity apps/games for the Telegram platform in the form of Telegram Stars. No need to connect payment providers as it was before.
+
 # Technical Demo
 
 You can test the SDK without installation on the demo app [in Telegram bot](https://t.me/UnigramPayment_bot/launch).
@@ -18,14 +20,6 @@ For the library to work correctly, the following dependencies **must be installe
 [Download the latest version of the SDK via the .unityPackage file here](https://github.com/MrVeit/Veittech-UnigramPayment/releases).
 
 # Initialization
-
-Before you can use all the features of the SDK, you must initialize it in **one of two available ways**.
-
-#### Аutomatic initialization:
-The `UnigramPaymentSDK` component has an option called `Initialize On Awake`. When you activate it, the SDK will initialize automatically. You only need to subscribe to the necessary events and start working with it.
-
-#### Manual initialization:
-Below is a test example of how it can look like.
 
 # Donations
 
