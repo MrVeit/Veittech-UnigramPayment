@@ -4,7 +4,7 @@
 [![Version](https://img.shields.io/github/package-json/v/MrVeit/Veittech-UnigramPayment?color=318CE7&style=flat-square)](package.json)
 [![Unity](https://img.shields.io/badge/Unity-2020.1+-2296F3.svg?color=318CE7&style=flat-square)](https://unity.com/releases/editor/archive)
 
-**UNIGRAM PAYMENT** is a convenient solution for creating purchases in your Unity apps/games for the Telegram platform in the form of Telegram Stars. No need to connect payment providers as it was before.
+**UNIGRAM PAYMENT** is a library for making payments inside web applications made on Unity using a new internal currency - Telegram Stars. No need to connect payment providers as it was before.
 
 # Technical Demo
 
@@ -18,7 +18,7 @@ Install the following plugins/libraries for the SDK to work correctly:
 
 # Installation
 
-[Download the latest version of the SDK via the .unityPackage file here](https://github.com/MrVeit/Veittech-UnigramPayment/releases).
+**[Download the latest version of the SDK via the .unityPackage file here](https://github.com/MrVeit/Veittech-UnigramPayment/releases).**
 
 # Initialization
 
