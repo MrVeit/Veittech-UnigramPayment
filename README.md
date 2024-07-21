@@ -8,7 +8,7 @@
 
 # Technical Demo
 
-You can test the SDK without installation on the demo app [in Telegram bot](https://t.me/UnigramPayment_bot/launch).
+You can test the SDK without installation in the TMA (Telegram Mini App) demo [via Telegram bot](https://t.me/UnigramPayment_bot/launch).
 
 # Dependencies
 
@@ -221,9 +221,9 @@ public sealed class UsageTemplate : MonoBehaviour
 
 Now you will easily get a payment link, which you can open in your browser and pay in `your Telegram bot` if it was launched locally.
 
-** IMPORTANT:** Processing a callback with receipt of payment check and subsequent refund **NOT AVAILABLE IN EDITOR**. So you need to create an assembly for WebGL and upload it to `Github Pages` or anywhere else where you have an `HTTPS Connection` and a valid `SSL Certificate` (I won't describe a detailed tutorial here, as you can find that online).
+**IMPORTANT:** Processing a callback with receipt of payment check and subsequent refund **NOT AVAILABLE IN EDITOR**. So you need to create an assembly for WebGL and upload it to `Github Pages` or anywhere else where you have an `HTTPS Connection` and a valid `SSL Certificate` (I won't describe a detailed tutorial here, as you can find that online).
 
-P.S.: for detailed information on how to properly build a project with the Unigram Payment library, go to the `Build` section.
+**P.S:** for detailed information on how to properly build a project with the Unigram Payment library, go to the [`Build`](https://github.com/MrVeit/Veittech-UnigramPayment#build) section.
 
 ### Invoice opening and payment
 
@@ -451,11 +451,15 @@ After you request a payment refund, the API server contacts the Telegram API for
 
 ### Access token update
 
-The API server access token has its own expiration date, which you can change at your discretion in the `session.js` script on the server **(by default it is valid for an hour)**. Once this expires, access to the API for your Unity client is closed and you need to update it. The SDK provides **an automatic token update** if a failed request to the server was made with a corresponding `Unauthorized client, access denied` error. If you want to manually refresh the access token, then call the `UnigramPaymentSDK.Instance.RefreshToken()` method and subscribe to the successful refresh result `UnigramPaymentSDK.Instance.OnSessionTokenRefreshed`.
+The API server access token has its own expiration date, which you can change at your discretion in the `session.js` script on the server **(by default it is valid for an hour)**. Once this expires, access to the API for your Unity client is closed and you need to update it. The SDK provides **an automatic token update** if a failed request to the server was made with a corresponding **Unauthorized client, access denied** error. If you want to manually refresh the access token, then call the `UnigramPaymentSDK.Instance.RefreshToken()` method and subscribe to the successful refresh result `UnigramPaymentSDK.Instance.OnSessionTokenRefreshed`.
 
 # Build
 
+Before you start building your unity project in WebGl, you need to do a few things to get the library **working properly.**
 
+Go to the `Build Settings` window, then open `Project Settings -> Player -> Resolution and Presentation` and select the `Unigram Pay` build template. To display correctly in Telegram Web View, you need to set `Default Canvas Width` to 1080 and `Default Canvas Height` to 1920, and disable the `Run in Background` option.
+
+These are all the necessary steps that need to be done for the project **to build successfully** and for the library functions **to work properly.**
 
 # Production Deploy
 
