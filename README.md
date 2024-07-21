@@ -12,7 +12,8 @@ You can test the SDK without installation on the demo app [in Telegram bot](http
 
 # Dependencies
 
-For the library to work correctly, the following dependencies **must be installed** in the project before use:
+Install the following plugins/libraries for the SDK to work correctly:
+
 - **[Newtonsoft](https://www.youtube.com/watch?v=3H6xkl_EsvQ)** - modern solution for convenient work with json files.
 
 # Installation
@@ -37,7 +38,7 @@ https://github.com/MrVeit/Veittech-UnigramPayment-TelegramBot
 
 If you already have Node.js installed on your Windows computer (does anyone make Unity games on Linux? :D), you can skip this step and move on to the next one. If you still don't have it installed, you need to go to the official Node.js website and [install it yourself](https://nodejs.org/en/).
 
-After installing and cloning the two repositories above, you can open the two projects in VS Code or any other code editor that supports Node.js.
+After installing and cloning the two repositories above, you can open the two projects in VS Code or any other code editor **that supports Node.js.**
 
 Now, in order to be able to run these projects locally and start testing, you need to create an environment variable repository. To do this, you need to create a file named `.env` but **without any file format** in the directory of both repositories.
 
@@ -104,7 +105,7 @@ The `UnigramPaymentSDK` component has an option `Initialize On Awake`. When it i
 Below is a test example of what this might look like.
 
 ```c#
-public sealed class InitializationUsageTemplate : MonoBehaviour
+public sealed class UsageTemplate : MonoBehaviour
 {
     private UnigramPaymentSDK _unigramPayment;
 
@@ -151,10 +152,10 @@ You can find this storage by going to `Assets -> Unigram Payment -> Items Storag
 
 ### Creating a payment invoice
 
-Below you can see an example of creating an invoice to pay for an item in Telegram Stars.
+Below you can see an example of creating an invoice to pay for an item in Telegram Stars:
 
 ```c#
-public sealed class InitializationUsageTemplate : MonoBehaviour
+public sealed class UsageTemplate : MonoBehaviour
 {
     [SerializeField, Space] private Button _createInvoiceButton;
     [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
@@ -170,7 +171,7 @@ public sealed class InitializationUsageTemplate : MonoBehaviour
         _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
 
         _unigramPayment.OnInvoiceLinkCreated -= PaymentInvoiceCreated;
-        _unigramPayment.OnInvoiceLinkCreated -= PaymentInvoiceCreateFailed;
+        _unigramPayment.OnInvoiceLinkCreateFailed -= PaymentInvoiceCreateFailed;
     }
 
     private void Start()
@@ -182,7 +183,7 @@ public sealed class InitializationUsageTemplate : MonoBehaviour
         _unigramPayment.OnInitialized += UnigramPaymentInitialized;
 
         _unigramPayment.OnInvoiceLinkCreated += PaymentInvoiceCreated;
-        _unigramPayment.OnInvoiceLinkCreated += PaymentInvoiceCreateFailed;
+        _unigramPayment.OnInvoiceLinkCreateFailed += PaymentInvoiceCreateFailed;
 
         _unigramPayment.Initialize();
     }
@@ -213,22 +214,248 @@ public sealed class InitializationUsageTemplate : MonoBehaviour
 
     private void PaymentInvoiceCreateFailed()
     {
-        Debug.Log("Failed to create a payment link for one of the following reasons");
+        Debug.LogError("Failed to create a payment link for one of the following reasons");
     }
 }
 ```
 
-Now you will easily get a payment link that you can open in your browser and pay in `your Telegram bot`, if it was launched locally earlier.
+Now you will easily get a payment link, which you can open in your browser and pay in `your Telegram bot` if it was launched locally.
 
-**IMPORTANT:** Callback processing with receipt of payment check and further refund **NOT AVAILABLE IN EDITOR** mode. So you need to build a build for WebGL and upload it to `Github Pages` or any other place where you have an `HTTPS connection` and a valid `SSL certificate` (I'm not describing a detailed guide here, because you can find it on the Internet if you want).
+** IMPORTANT:** Processing a callback with receipt of payment check and subsequent refund **NOT AVAILABLE IN EDITOR**. So you need to create an assembly for WebGL and upload it to `Github Pages` or anywhere else where you have an `HTTPS Connection` and a valid `SSL Certificate` (I won't describe a detailed tutorial here, as you can find that online).
 
-P.S: for detailed steps to correctly build a project with Unigram Payment library, go to `Build` section.
+P.S.: for detailed information on how to properly build a project with the Unigram Payment library, go to the `Build` section.
 
 ### Invoice opening and payment
 
+The following shows the implementation of opening and paying an invoice. The result is processed through appropriate callbacks from receipt of the check when payment is successful or unsuccessful:
 
+```c#
+public sealed class UsageTemplate : MonoBehaviour
+{
+    [SerializeField, Space] private Button _createInvoice;
+    [SerializeField] private Button _openInvoice;
+    [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
+
+    private UnigramPaymentSDK _unigramPayment;
+
+    private PaymentReceiptData _itemPaymentReceipt;
+
+    private string _latestInvoice;
+
+    private void OnDisable()
+    {
+        _createInvoice.onClick.RemoveListener(CreateInvoice);
+        _openInvoice.onClick.RemoveListener(OpenInvoice);
+
+        _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
+
+        _unigramPayment.OnInvoiceLinkCreated -= PaymentInvoiceCreated;
+        _unigramPayment.OnInvoiceLinkCreateFailed -= PaymentInvoiceCreateFailed;
+
+        _unigramPayment.OnItemPurchased -= ItemPurchased;
+        _unigramPayment.OnItemPurchaseFailed -= ItemPurchaseFailed;
+    }
+
+    private void Start()
+    {
+        _createInvoice.onClick.AddListener(CreateInvoice);
+        _openInvoice.onClick.AddListener(OpenInvoice);
+
+        _unigramPayment = UnigramPaymentSDK.Instance;
+
+        _unigramPayment.OnInitialized += UnigramPaymentInitialized;
+
+        _unigramPayment.OnInvoiceLinkCreated += PaymentInvoiceCreated;
+        _unigramPayment.OnInvoiceLinkCreateFailed += PaymentInvoiceCreateFailed;
+
+        _unigramPayment.OnItemPurchased += ItemPurchased;
+        _unigramPayment.OnItemPurchaseFailed += ItemPurchaseFailed;
+
+        _unigramPayment.Initialize();
+    }
+
+    private void CreateInvoice()
+    {
+        var randomItemFromStorage = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
+
+        Debug.Log($"Claimed item with payload id: {randomItemFromStorage.Id}");
+
+        _unigramPayment.CreateInvoice(randomItemFromStorage);
+    }
+        
+    private void OpenInvoice()
+    {
+        _unigramPayment.OpenInvoice(_latestInvoice);
+    }
+
+    private void UnigramPaymentInitialized(bool isSuccess)
+    {
+        if (isSuccess)
+        {
+            Debug.Log("Success initialize Unigram Payment SDK");
+        }
+    }
+
+    private void PaymentInvoiceCreated(string invoiceLink)
+    {
+        _latestInvoice = invoiceLink;
+
+        Debug.Log($"The link to purchase the test item has been successfully generated: {url}");
+    }
+
+    private void PaymentInvoiceCreateFailed()
+    {
+        Debug.LogError("Failed to create a payment link for one of the following reasons");
+    }
+
+    private void ItemPurchased(PaymentReceiptData receipt)
+    {
+        _itemPaymentReceipt = receipt;
+
+        Debug.Log($"The item with identifier {_itemPaymentReceipt.InvoicePayload} " +
+                $"was successfully purchased for {_itemPaymentReceipt.Amount} " +
+                $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}");
+    }
+
+    private void ItemPurchaseFailed()
+    {
+        Debug.LogError("Failed to purchase an item for one of the following reasons");
+    }
+}
+```
+
+When called to open a **previously generated invoice**, you will be presented with a native Pop up window to make a payment, which you can close without payment or pay - the results of both cases will be processed by the SDK.
+
+### Payment refund
+
+The following shows the implementation of a call to return a previously paid invoice:
+
+```c#
+public sealed class UsageTemplate : MonoBehaviour
+{
+    [SerializeField, Space] private Button _createInvoice;
+    [SerializeField] private Button _openInvoice;
+    [SerializeField] private Button _refundPayment;
+    [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
+
+    private UnigramPaymentSDK _unigramPayment;
+
+    private PaymentReceiptData _itemPaymentReceipt;
+
+    private string _latestInvoice;
+
+    private void OnDisable()
+    {
+        _createInvoice.onClick.RemoveListener(CreateInvoice);
+        _openInvoice.onClick.RemoveListener(OpenInvoice);
+        _refundPayment.onClick.RemoveListener(Refund);
+
+        _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
+
+        _unigramPayment.OnInvoiceLinkCreated -= PaymentInvoiceCreated;
+        _unigramPayment.OnInvoiceLinkCreateFailed -= PaymentInvoiceCreateFailed;
+
+        _unigramPayment.OnItemPurchased -= ItemPurchased;
+        _unigramPayment.OnItemPurchaseFailed -= ItemPurchaseFailed;
+
+        _unigramPayment.OnRefundTransactionFinished -= RefundTransactionFinished;
+    }
+
+    private void Start()
+    {
+        _createInvoice.onClick.AddListener(CreateInvoice);
+        _openInvoice.onClick.AddListener(OpenInvoice);
+        _refundPayment.onClick.AddListener(Refund);
+
+        _unigramPayment = UnigramPaymentSDK.Instance;
+
+        _unigramPayment.OnInitialized += UnigramPaymentInitialized;
+
+        _unigramPayment.OnInvoiceLinkCreated += PaymentInvoiceCreated;
+        _unigramPayment.OnInvoiceLinkCreateFailed += PaymentInvoiceCreateFailed;
+
+        _unigramPayment.OnItemPurchased += ItemPurchased;
+        _unigramPayment.OnItemPurchaseFailed += ItemPurchaseFailed;
+
+        _unigramPayment.OnRefundTransactionFinished += RefundTransactionFinished;
+
+        _unigramPayment.Initialize();
+    }
+
+    private void CreateInvoice()
+    {
+        var randomItemFromStorage = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
+
+        Debug.Log($"Claimed item with payload id: {randomItemFromStorage.Id}");
+
+        _unigramPayment.CreateInvoice(randomItemFromStorage);
+    }
+        
+    private void OpenInvoice()
+    {
+        _unigramPayment.OpenInvoice(_latestInvoice);
+    }
+
+    private void Refund()
+    {
+        _unigramPayment.Refund(_itemPaymentReceipt);
+    }
+
+    private void UnigramPaymentInitialized(bool isSuccess)
+    {
+        if (isSuccess)
+        {
+            Debug.Log("Success initialize Unigram Payment SDK");
+        }
+    }
+
+    private void PaymentInvoiceCreated(string invoiceLink)
+    {
+        _latestInvoice = invoiceLink;
+
+        Debug.Log($"The link to purchase the test item has been successfully generated: {url}");
+    }
+
+    private void PaymentInvoiceCreateFailed()
+    {
+        Debug.LogError("Failed to create a payment link for one of the following reasons");
+    }
+
+    private void ItemPurchased(PaymentReceiptData receipt)
+    {
+        _itemPaymentReceipt = receipt;
+
+        Debug.Log($"The item with identifier {_itemPaymentReceipt.InvoicePayload} " +
+                $"was successfully purchased for {_itemPaymentReceipt.Amount} " +
+                $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}");
+    }
+
+    private void ItemPurchaseFailed()
+    {
+        Debug.LogError("Failed to purchase an item for one of the following reasons");
+    }
+
+    private void RefundTransactionFinished(bool isSuccess)
+    {
+        if (isSuccess)
+        {
+            Debug.Log("The process of refunding the purchased stars through the transaction with" +
+                    $" the identifier `{_unigramPayment.LastRefundedTransaction}` " +
+                    $"has been completed successfully");
+        }
+    }
+}
+```
+
+After you request a payment refund, the API server contacts the Telegram API for the `specified transaction id` and `buyer id`. The next step is to check if this payment from this user has been in your Telegram bot at all or if it has been previously refunded. After receiving the result, you can display some notification to the user about successful or unsuccessful refund.
+
+### Access token update
+
+The API server access token has its own expiration date, which you can change at your discretion in the `session.js` script on the server **(by default it is valid for an hour)**. Once this expires, access to the API for your Unity client is closed and you need to update it. The SDK provides **an automatic token update** if a failed request to the server was made with a corresponding `Unauthorized client, access denied` error. If you want to manually refresh the access token, then call the `UnigramPaymentSDK.Instance.RefreshToken()` method and subscribe to the successful refresh result `UnigramPaymentSDK.Instance.OnSessionTokenRefreshed`.
 
 # Build
+
+
 
 # Production Deploy
 
@@ -238,7 +465,7 @@ If you want to support my work you can send Toncoins to this address:
 ```
 UQDPwEk-cnQXEfFaaNVXywpbKACUMwVRupkgWjhr_f4Ursw6
 ```
-Below you can see an example of creating an invoice to pay for an item in Telegram Stars.
+
 **Thanks for your support!**
 
 # Support
