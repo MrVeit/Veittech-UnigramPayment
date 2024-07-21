@@ -133,7 +133,7 @@ public sealed class UsageTemplate : MonoBehaviour
 }
 ```
 
-#### Possible problems:
+### Possible problems:
 
 After writing a script to initialize the SDK. You may encounter a number of errors because the configuration of the connection to the test API server is not yet set up.
 
@@ -451,7 +451,11 @@ After you request a payment refund, the API server contacts the Telegram API for
 
 ### Access token update
 
-The API server access token has its own expiration date, which you can change at your discretion in the `session.js` script on the server **(by default it is valid for an hour)**. Once this expires, access to the API for your Unity client is closed and you need to update it. The SDK provides **an automatic token update** if a failed request to the server was made with a corresponding **Unauthorized client, access denied** error. If you want to manually refresh the access token, then call the `UnigramPaymentSDK.Instance.RefreshToken()` method and subscribe to the successful refresh result `UnigramPaymentSDK.Instance.OnSessionTokenRefreshed`.
+The API server access token has an expiration date, which you can change at your discretion in the `session.js` script on the server ** (by default it is valid for an hour)**. 
+
+After this expires, access to the API for your Unity client is closed, and you need to upgrade. The SDK provides an **automatic token update** if a failed request to the server is made with the corresponding error **Unauthorized client, access denied**. 
+
+If you want to manually refresh the access token, then call the `UnigramPaymentSDK.Instance.RefreshToken()` method and subscribe to the successful refresh result `UnigramPaymentSDK.Instance.OnSessionTokenRefreshed`.
 
 # Build
 
