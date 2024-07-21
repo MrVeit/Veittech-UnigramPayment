@@ -55,7 +55,7 @@ CLIENT_JWT_SIGN = “unigram_payment-unity”
 
 - The `SERVER_DOMAIN` variable is a link to your domain where the API server is running, for the purposes of testing we will use the local address `http://localhost`,
 
-- The `BOT_TOKEN` variable is your Telegram bot token, which can be created in [Bot Father](https://t.me/BotFather) inside Telegram by following simple steps. After creating the bot, you need to enter the command in [Bot Father](https://t.me/BotFather) `/mybots -> Select your bot -> Go to API Token -> Copy the value from there -> Paste the variable value without quotes`,
+- The `BOT_TOKEN` variable is the token of your Telegram bot, which can be created in [Bot Father](https://t.me/BotFather) inside Telegram by following the following simple steps. After creating the bot, you need to enter the command in **`/mybots`** and then go to the following path: `Select your bot -> Go to API Token -> Copy the value from there -> Paste the variable value without quotes`,
 
 - The `BOT_SECRET_KEY` variable is the signature key by which the API server will identify your bot when it receives a check for payment. Ignoring third-party requests if they do not match this value, after decrypting the bot token.
 Here you can use a pair of two words or one with numbers, using any special characters.
@@ -104,8 +104,133 @@ The `UnigramPaymentSDK` component has an option `Initialize On Awake`. When it i
 Below is a test example of what this might look like.
 
 ```c#
+public sealed class InitializationUsageTemplate : MonoBehaviour
+{
+    private UnigramPaymentSDK _unigramPayment;
 
+    private void OnDisable()
+    {
+        _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
+    }
+
+    private void Start()
+    {
+        _unigramPayment = UnigramPaymentSDK.Instance;
+
+        _unigramPayment.OnInitialized += UnigramPaymentInitialized;
+
+        _unigramPayment.Initialize();
+    }
+
+    private void UnigramPaymentInitialized(bool isSuccess)
+    {
+        if (isSuccess)
+        {
+            Debug.Log("Success initialize Unigram Payment SDK");
+        }
+    }
+}
 ```
+
+#### Possible problems:
+
+After writing a script to initialize the SDK. You may encounter a number of errors because the configuration of the connection to the test API server is not yet set up.
+
+So you need to go to the configuration window via `Unigram Payment -> API Config`.
+Now you need to fill the `Client Secret Key` field with the value you previously entered for the API server variable `CLIENT_SECRET_KEY`.
+You can leave the `Server Url` field unchanged if you want to do local testing.
+
+# Usage Template
+
+Now it's time to look at examples of using the Unigram Payment `library API`.
+After successful initialization, you can create a test invoice for payment.
+
+**IMPORTANT:** the library makes a special storage with products in the form of Scriptable Object, the configuration of which contains such fields as: `Id`, `Name`, `Description` and its `Price` in Telegram Stars.
+
+You can find this storage by going to `Assets -> Unigram Payment -> Items Storage`. To add your own items, right click on the project window and go to `Create -> Unigram Payment -> Saleable Item`.
+
+### Creating a payment invoice
+
+Below you can see an example of creating an invoice to pay for an item in Telegram Stars.
+
+```c#
+public sealed class InitializationUsageTemplate : MonoBehaviour
+{
+    [SerializeField, Space] private Button _createInvoiceButton;
+    [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
+
+    private UnigramPaymentSDK _unigramPayment;
+
+    private string _latestInvoice;
+
+    private void OnDisable()
+    {
+        _createInvoiceButton.onClick.RemoveListener(CreateInvoice);
+
+        _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
+
+        _unigramPayment.OnInvoiceLinkCreated -= PaymentInvoiceCreated;
+        _unigramPayment.OnInvoiceLinkCreated -= PaymentInvoiceCreateFailed;
+    }
+
+    private void Start()
+    {
+        _createInvoiceButton.onClick.AddListener(CreateInvoice);
+
+        _unigramPayment = UnigramPaymentSDK.Instance;
+
+        _unigramPayment.OnInitialized += UnigramPaymentInitialized;
+
+        _unigramPayment.OnInvoiceLinkCreated += PaymentInvoiceCreated;
+        _unigramPayment.OnInvoiceLinkCreated += PaymentInvoiceCreateFailed;
+
+        _unigramPayment.Initialize();
+    }
+
+    private void CreateInvoice()
+    {
+        var randomItemFromStorage = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
+
+        Debug.Log($"Claimed item with payload id: {randomItemFromStorage.Id}");
+
+        _unigramPayment.CreateInvoice(randomItemFromStorage);
+    }
+
+    private void UnigramPaymentInitialized(bool isSuccess)
+    {
+        if (isSuccess)
+        {
+            Debug.Log("Success initialize Unigram Payment SDK");
+        }
+    }
+
+    private void PaymentInvoiceCreated(string invoiceLink)
+    {
+        _latestInvoice = invoiceLink;
+
+        Debug.Log("The link to purchase the test item has been successfully generated: {url}");
+    }
+
+    private void PaymentInvoiceCreateFailed()
+    {
+        Debug.Log("Failed to create a payment link for one of the following reasons");
+    }
+}
+```
+
+Now you will easily get a payment link that you can open in your browser and pay in `your Telegram bot`, if it was launched locally earlier.
+
+**IMPORTANT:** Callback processing with receipt of payment check and further refund **NOT AVAILABLE IN EDITOR** mode. So you need to build a build for WebGL and upload it to `Github Pages` or any other place where you have an `HTTPS connection` and a valid `SSL certificate` (I'm not describing a detailed guide here, because you can find it on the Internet if you want).
+
+P.S: for detailed steps to correctly build a project with Unigram Payment library, go to `Build` section.
+
+### Invoice opening and payment
+
+
+
+# Build
+
+# Production Deploy
 
 # Donations
 
@@ -113,7 +238,7 @@ If you want to support my work you can send Toncoins to this address:
 ```
 UQDPwEk-cnQXEfFaaNVXywpbKACUMwVRupkgWjhr_f4Ursw6
 ```
-
+Below you can see an example of creating an invoice to pay for an item in Telegram Stars.
 **Thanks for your support!**
 
 # Support
