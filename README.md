@@ -25,7 +25,7 @@ Install the following plugins/libraries for the SDK to work correctly:
 ### Initializing backend components
 
 Before you start testing the library in your project, you need to set up the base, without which it will not work.
-To do this, it is necessary to run locally Server API and Telegram Bot, in which the logic of payments will be conducte.
+To do this, it is necessary to run locally `Server API` and `Telegram Bot`, in which the logic of payments will be conducte.
 
 To do this, you need to make a clone of the Server API repository that is written in Node.js:
 ```
@@ -36,9 +36,9 @@ And also a clone of the Telegram Bot repository, which is also written in Node.j
 https://github.com/MrVeit/Veittech-UnigramPayment-TelegramBot
 ```
 
-If you already have Node.js installed on your PC running Windows (does anyone make Unity games on Linux? :D), you can skip this step and move on to the next one. If you still don't have it installed, you need to go to the official Node.js website and [install it yourself](https://nodejs.org/en/).
+If you already have Node.js installed on your PC `running Windows` (does anyone make Unity games on Linux? :D), you can skip this step and move on to the next one. If you still don't have it installed, you need to go to the official Node.js website and [install it yourself](https://nodejs.org/en/).
 
-After installing and cloning the above two repositories, you can open both projects in VS Code or any other code editor that **supports Node.js.**.
+After installing and cloning the above two repositories, you can open both projects in `VS Code` or `any other code editor` that **supports Node.js.**.
 
 Now, to be able to run these projects locally and start testing, you need to create a repository environment variable. To do this, you need to create a file named `.env` but **without a file format** in the directory of both repositories.
 
@@ -62,7 +62,7 @@ CLIENT_JWT_SIGN = “unigram_payment-unity”
 Here you can use a pair of two words or one with numbers, using any special characters.
 **IMPORTANT:** Store this key securely, it should not be public,
 
-- The `CLIENT_SECRET_KEY` variable is the same signature key as the previous one, but for your Unity game. With it, before creating a payment request, you will need to authorize on the API server. ** IMPORTANT:** It must also be stored securely and must not be public,
+- The `CLIENT_SECRET_KEY` variable is the same signature key as the previous one, but for your Unity game. With it, before creating a payment request, you will need to authorize on the API server. **IMPORTANT:** It must also be stored securely and must not be public,
 
 - The `CLIENT_JWT_SIGN` variable is an additional signing key with which your Unity game, after authorizing to the API server and receiving a generated JWT token, is signed with this key. Then, when requesting other API methods, the Unity game sends this generated JWT token in the Authorizatio header, and the server decrypts the token value with this key to allow access to its functionality if the values match.
 
@@ -447,7 +447,7 @@ public sealed class UsageTemplate : MonoBehaviour
 }
 ```
 
-After you request a payment refund, the API server contacts the Telegram API for the `specified transaction id` and `buyer id`. The next step is to check if this payment from this user has been in your Telegram bot at all or if it has been previously refunded. After receiving the result, you can display some notification to the user about successful or unsuccessful refund.
+After you request a payment refund, the API server contacts the Telegram API for the specified `transaction id` and `buyer id`. The next step is to check if this payment from this user has been in your Telegram bot at all or if it has been previously refunded. After receiving the result, you can display some notification to the user about successful or unsuccessful refund.
 
 ### Access token update
 
@@ -682,7 +682,7 @@ sudo ln -s /etc/nginx/sites-available/YOUR_DOMAIN_NAME /etc/nginx/sites-enabled/
 sudo nginx -t
 ```
 
-** IMPORTANT:** In case you see `syntax is OK`, you can proceed to the next step.
+**IMPORTANT:** In case you see `syntax is OK`, you can proceed to the next step.
 
 6. Reboot Nginx to apply the new configuration:
 ```
