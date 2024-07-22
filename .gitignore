@@ -71,3 +71,10 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /Scenes
 /TextMesh Pro
+LICENSE.md.meta
+package.json.meta
+README.md.meta
+/Resources
+/Unigram Payment/Editor Resources/Internal Storage
+TextMesh Pro.meta
+Resources.meta
