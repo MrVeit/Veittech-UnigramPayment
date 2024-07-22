@@ -467,6 +467,113 @@ These are all the necessary steps that need to be done for the project **to buil
 
 # Production Deploy
 
+Here is a **step-by-step guide** to deploying an `API server` and a `Telegram bot` on your server.
+
+As an example, we will use a `virtual server` on `OC Ubuntu` that was rented from this hosting provider (if you decide to rent a server from them too, go to [this link and get a sweet discount](https://aeza.net/?ref=482600)).
+
+Once we have rented a virtual server and connected to it via SSH, we can now install the required modules.
+
+### Installing Git
+
+Allows you to clone public/private repositories to your server.
+
+1. Update the list of packages on the server:
+```
+sudo apt update
+```
+
+2. Installing a module
+```
+sudo apt install git -y
+```
+
+3. After the installation is complete, enter this command to verify that the installation was successful:
+```
+git --version
+```
+
+### Installing Docker
+
+Runs your project as an isolated container and greatly speeds up the process of running it on the server, without having to write a bunch of commands.
+
+1. First, you need to download the base packages for Docker:
+```
+sudo apt install apt-transport-https ca-certificates curl software-properties-common -y
+```
+
+2. Now we need to add the official Docker GPG key:
+```
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+```
+
+3. Now we need to add the docker repository to APT:
+```
+echo “deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable” | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+```
+
+4. Update the list of packages on the server:
+```
+sudo apt update
+```
+
+5. Check that Docker will be installed from the official repository with the current version:
+```
+apt-cache policy docker-ce
+```
+
+6. The long-awaited installation of Docker on the server:
+```
+sudo apt install docker-ce -y
+```
+
+### Installing the Make module
+
+Allows you to quickly deploy/stop/delete your projects on the server, without having to type a bunch of commands.
+
+1. Update the list of packages on the server:
+```
+sudo apt update
+```
+
+2. Installing a package
+```
+sudo apt install build-essential -y
+```
+
+3. Check that the module has been installed correctly:
+```
+make --version
+```
+
+### Installing Nginx
+
+The web server, which in this example will `proxy all requests` to your API server when you send `GET` and `POST` requests to your server's IP address or domain.
+
+1. Update the list of packages on the server:
+```
+sudo apt update
+```
+
+2. Installing a package
+```
+sudo apt install nginx -y
+```
+
+3. Now it is necessary to check the status of Nginx operation
+```
+sudo systemctl status nginx
+```
+
+4. Go to the IP address of your server in your browser:
+```
+http://YOUR_SERVER_IP_ADDRESS
+```
+
+After the correct installation, you need to make sure that port 80 is open on the server.
+If Nginx is successfully installed and working correctly, you will see a welcome page.
+
+
+
 # Donations
 
 If you want to support my work you can send Toncoins to this address:
