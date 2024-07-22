@@ -585,8 +585,6 @@ You can do this [right here](https://my.aeza.net/order/domain) if you have alrea
 Once you have connected your server's IP address in the domain settings, you can start setting up the connection.
 If you don't have a reliable SSL certificate, you can generate one with a few commands.
 
-#### Set up SSL Certificate
-
 1. Update the list of packages on the server:
 ```
 sudo apt update
@@ -780,7 +778,6 @@ Multichain Wallet (BTC/ETH/BNB/MATIC)
 ```
 0x231803Df809C207FaA330646BB5547fD087FEcA1
 ```
-
 
 **Thanks for your support!**
 
