@@ -572,7 +572,7 @@ http://YOUR_SERVER_IP_ADDRESS
 After the correct installation, you need to make sure that `port 80` is open on the server.
 If Nginx is successfully installed and working correctly, you will **see a welcome page.**
 
-### Configuring HTTPS connection:
+### Configuring HTTPS connection
 
 Telegram has very strict rules regarding requests to third-party resources from Telegram bots. Therefore, it is necessary to add the ability to connect to the API server via HTTPS 
 
@@ -609,17 +609,17 @@ Certbot will prompt you to choose whether to redirect `HTTP` traffic to `HTTPS`,
 
 ### Configuring API server configuration
 
-Now you need to go to the nginx configuration directory and create a configuration for your API server:
+1. Now you need to go to the nginx configuration directory and create a configuration for your API server:
 ```
 sudo nano /etc/nginx/sites-available/
 ```
 
-Create a configuration with the name of your domain:
+2. Create a configuration with the name of your domain:
 ```
 nano YOUR_DOMAIN_NAME
 ```
 
-Copy and paste this configuration data, but replace `YOUR_DOMAIN_NAME` with your domain:
+3. Copy and paste this configuration data, but replace `YOUR_DOMAIN_NAME` with your domain:
 
 ```nginx
 server
@@ -669,33 +669,51 @@ server
 ```
 
 Also, in addition to setting up nginx, in this configuration we set up mandatory headers so that the connection succeeds and is not blocked.
+
 **IMPORTANT:** Failure to do so will result in an attempt to send `any GET/POST` request from your Web App **inside Telegram being blocked.**
+
+4. Create a symbolic link to your configuration in the sites-enabled directory:
+```
+sudo ln -s /etc/nginx/sites-available/YOUR_DOMAIN_NAME /etc/nginx/sites-enabled/
+```
+
+5. Check the Nginx configuration for syntax errors:
+```
+sudo nginx -t
+```
+
+** IMPORTANT:** In case you see `syntax is OK`, you can proceed to the next step.
+
+6. Reboot Nginx to apply the new configuration:
+```
+sudo systemctl reload nginx
+```
 
 ### Deploy API Server
 
 After installing all the necessary modules and setting up the necessary configurations, you can start to deploy the API server
 
-Go to the main directory of the server
+1. Go to the main directory of the server
 ```
 cd /root/
 ```
 
-Clone the repository with the API server into the root directory:
+2. Clone the repository with the API server into the root directory:
 ```
 git clone https://github.com/MrVeit/Veittech-UnigramPayment-ServerAPI.git
 ```
 
-Get the contents of the directory:
+3. Get the contents of the directory:
 ```
 ls -l
 ```
 
-Navigate to the server API files:
+4. Navigate to the server API files:
 ```
 cd Veittech-UnigramPayment-ServerAPI/src
 ```
 
-Now we need to create a file with the storage of environment variables that are used in the project:
+5. Now we need to create a file with the storage of environment variables that are used in the project:
 ```
 nano .env
 ```
@@ -703,42 +721,53 @@ nano .env
 We have already created it earlier [at this stage](https://github.com/MrVeit/Veittech-UnigramPayment?tab=readme-ov-file#initializing-backend-components), so copy and paste these values:
 The value of the `SERVER_DOMAIN` variable replace it with the domain of your server that you previously rented, binding it to the server.
 
-Start building and creating a docker container with an API server with a single command:
+6. Start building and creating a docker container with an API server with a single command:
 ```
 make run
 ```
 
-After the deploy, check the docker container logs to make sure no errors occurred:
+7. To verify that the docker container is running, enter the following command:
+```
+docker ps
+```
+
+**P.S:** If the container is successfully started, you will see its name in the list, its id, and the time since it was started.
+
+8. After the deploy, check the docker container logs to make sure no errors occurred:
 ```
 make logs
 ```
 
 In case the launch **was successful**, you will see only 1 line in the logs: `API Server running at YOUR_DOMAIN_NAME`.
+Your API server is now running on the server and ready to accept requests from your client on Unity
 
 ### Deploy a Telegram bot
 
 Once the basic set of modules has been installed, you can start running one of the projects.
 
-Navigate to the main directory of the server
+1. Navigate to the main directory of the server
 ```
 cd /root/
 ```
 
-Clone the repository with the telegram bot into the root directory of the server:
+2. Clone the repository with the telegram bot into the root directory of the server:
 ```
 git clone https://github.com/MrVeit/Veittech-UnigramPayment-TelegramBot.git
 ```
 
-Get the contents of the directory:
+3. Get the contents of the directory:
 ```
 ls -l
 ```
 
-Navigate to the Telegram Bot files:
+4. Navigate to the Telegram Bot files:
 ```
 cd Veittech-UnigramPayment-TelegramBot/src
 ```
 
+**IMPORTANT:** Repeat the same steps starting from step 5 that you did to deploy your API server, they are **exactly the same.**
+
+After you have launched the second container with your Telegram bot, you can go to it and check its functionality.
 
 # Donations
 
