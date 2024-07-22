@@ -4,6 +4,10 @@
 [![Version](https://img.shields.io/github/package-json/v/MrVeit/Veittech-UnigramPayment?color=318CE7&style=flat-square)](package.json)
 [![Unity](https://img.shields.io/badge/Unity-2020.1+-2296F3.svg?color=318CE7&style=flat-square)](https://unity.com/releases/editor/archive)
 
+<p align="left">
+ <img width="600px" src="Assets/headerLibraryLogo.png" alt="qr"/>
+</p>
+
 **UNIGRAM PAYMENT** is a library for making payments inside web applications made on Unity using a new internal currency - Telegram Stars. No need to connect payment providers as it was before.
 
 # Technical Demo
@@ -101,6 +105,10 @@ Once the necessary backend components have been successfully installed and runni
 #### Automatic Initialization
 The `UnigramPaymentSDK` component has an option `Initialize On Awake`. When it is activated, the SDK is initialized automatically. You will only have to subscribe to the necessary events and start working with it.
 
+<p align="center">
+ <img width="600px" src="Assets/sdkConfigurationScript.png" alt="qr"/>
+</p>
+
 #### Manual Initialization
 Below is a test example of what this might look like:
 
@@ -140,6 +148,10 @@ After writing a script to initialize the SDK. You may encounter a number of erro
 So you need to go to the configuration window via `Unigram Payment -> API Config`.
 Now you need to fill the `Client Secret Key` field with the value you previously entered for the API server variable `CLIENT_SECRET_KEY`.
 You can leave the `Server Url` field unchanged if you want to do local testing.
+
+<p align="center">
+ <img width="600px" src="Assets/apiConnectConfiguration.png" alt="qr"/>
+</p>
 
 # Usage Template
 
@@ -463,6 +475,10 @@ Before you start building your unity project in WebGl, you need to do a few thin
 
 Go to the `Build Settings` window, then open `Project Settings -> Player -> Resolution and Presentation` and select the `Unigram Pay` build template. To display correctly in Telegram Web View, you need to set `Default Canvas Width` to 1080 and `Default Canvas Height` to 1920, and disable the `Run in Background` option.
 
+<p align="center">
+ <img width="600px" src="Assets/buildTemplate.png" alt="qr"/>
+</p>
+
 These are all the necessary steps that need to be done for the project **to build successfully** and for the library functions **to work properly.**
 
 # Production Backend Deploy
@@ -470,6 +486,8 @@ These are all the necessary steps that need to be done for the project **to buil
 Here is a **step-by-step guide** to deploying an `API server` and a `Telegram bot` on your server.
 
 As an example, we will use a `virtual server` on `OC Ubuntu` that was rented from this hosting provider (if you decide to rent a server from them too, go to [this link and get a sweet discount](https://aeza.net/?ref=482600)).
+
+## Installation of required modules
 
 Once we have rented a virtual server and connected to it via SSH, we can now install the required modules.
 
@@ -571,6 +589,8 @@ http://YOUR_SERVER_IP_ADDRESS
 
 After the correct installation, you need to make sure that `port 80` is open on the server.
 If Nginx is successfully installed and working correctly, you will **see a welcome page.**
+
+## Configuring components
 
 ### Configuring HTTPS connection
 
@@ -686,6 +706,8 @@ sudo nginx -t
 ```
 sudo systemctl reload nginx
 ```
+
+## Deploy
 
 ### Deploy API Server
 
