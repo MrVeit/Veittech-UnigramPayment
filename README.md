@@ -36,13 +36,13 @@ And also a clone of the Telegram Bot repository, which is also written in Node.j
 https://github.com/MrVeit/Veittech-UnigramPayment-TelegramBot
 ```
 
-If you already have Node.js installed on your Windows computer (does anyone make Unity games on Linux? :D), you can skip this step and move on to the next one. If you still don't have it installed, you need to go to the official Node.js website and [install it yourself](https://nodejs.org/en/).
+If you already have Node.js installed on your PC running Windows (does anyone make Unity games on Linux? :D), you can skip this step and move on to the next one. If you still don't have it installed, you need to go to the official Node.js website and [install it yourself](https://nodejs.org/en/).
 
-After installing and cloning the two repositories above, you can open the two projects in VS Code or any other code editor **that supports Node.js.**
+After installing and cloning the above two repositories, you can open both projects in VS Code or any other code editor that **supports Node.js.**.
 
-Now, in order to be able to run these projects locally and start testing, you need to create an environment variable repository. To do this, you need to create a file named `.env` but **without any file format** in the directory of both repositories.
+Now, to be able to run these projects locally and start testing, you need to create a repository environment variable. To do this, you need to create a file named `.env` but **without a file format** in the directory of both repositories.
 
-For the API Server environment variable repository, you need to fill in the following information:
+For the API Server repository environment variable, you need to fill in the following information:
 
 ```config
 SERVER_DOMAIN = http://localhost
@@ -98,11 +98,11 @@ Try reinstalling or searching for a solution to your problem on the Internet.
 
 Once the necessary backend components have been successfully installed and running, you can start customizing your Unity project.
 
-#### Automatic Initialization:
+#### Automatic Initialization
 The `UnigramPaymentSDK` component has an option `Initialize On Awake`. When it is activated, the SDK is initialized automatically. You will only have to subscribe to the necessary events and start working with it.
 
-#### Manual Initialization:
-Below is a test example of what this might look like.
+#### Manual Initialization
+Below is a test example of what this might look like:
 
 ```c#
 public sealed class UsageTemplate : MonoBehaviour
