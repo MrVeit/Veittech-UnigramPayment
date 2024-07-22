@@ -451,7 +451,7 @@ After you request a payment refund, the API server contacts the Telegram API for
 
 ### Access token update
 
-The API server access token has an expiration date, which you can change at your discretion in the `session.js` script on the server ** (by default it is valid for an hour)**. 
+The API server access token has an expiration date, which you can change at your discretion in the `session.js` script on the server **(by default it is valid for an hour)**. 
 
 After this expires, access to the API for your Unity client is closed, and you need to upgrade. The SDK provides an **automatic token update** if a failed request to the server is made with the corresponding error **Unauthorized client, access denied**. 
 
@@ -689,7 +689,7 @@ sudo systemctl reload nginx
 
 ### Deploy API Server
 
-After installing all the necessary modules and setting up the necessary configurations, you can start to deploy the API server
+After installing all the necessary modules and setting up the necessary configurations, you can start to deploy the API server.
 
 1. Go to the main directory of the server:
 ```
