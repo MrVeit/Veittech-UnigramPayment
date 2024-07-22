@@ -38,7 +38,7 @@ https://github.com/MrVeit/Veittech-UnigramPayment-TelegramBot
 
 If you already have Node.js installed on your PC `running Windows` (does anyone make Unity games on Linux? :D), you can skip this step and move on to the next one. If you still don't have it installed, you need to go to the official Node.js website and [install it yourself](https://nodejs.org/en/).
 
-After installing and cloning the above two repositories, you can open both projects in `VS Code` or `any other code editor` that **supports Node.js.**.
+After installing and cloning the above two repositories, you can open both projects in `VS Code` or `any other code editor` that **supports Node.js**.
 
 Now, to be able to run these projects locally and start testing, you need to create a repository environment variable. To do this, you need to create a file named `.env` but **without a file format** in the directory of both repositories.
 
@@ -739,7 +739,7 @@ make logs
 In case the launch **was successful**, you will see only 1 line in the logs: `API Server running at YOUR_DOMAIN_NAME`.
 Your API server is now running on the server and ready to accept requests from your client on Unity.
 
-### Deploy a Telegram bot
+### Deploy Telegram Bot
 
 Once the basic set of modules has been installed, you can start running one of the projects.
 
