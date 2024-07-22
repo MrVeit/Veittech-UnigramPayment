@@ -693,7 +693,7 @@ sudo systemctl reload nginx
 
 After installing all the necessary modules and setting up the necessary configurations, you can start to deploy the API server
 
-1. Go to the main directory of the server
+1. Go to the main directory of the server:
 ```
 cd /root/
 ```
@@ -739,13 +739,13 @@ make logs
 ```
 
 In case the launch **was successful**, you will see only 1 line in the logs: `API Server running at YOUR_DOMAIN_NAME`.
-Your API server is now running on the server and ready to accept requests from your client on Unity
+Your API server is now running on the server and ready to accept requests from your client on Unity.
 
 ### Deploy a Telegram bot
 
 Once the basic set of modules has been installed, you can start running one of the projects.
 
-1. Navigate to the main directory of the server
+1. Navigate to the main directory of the server:
 ```
 cd /root/
 ```
