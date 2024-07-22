@@ -465,7 +465,7 @@ Go to the `Build Settings` window, then open `Project Settings -> Player -> Reso
 
 These are all the necessary steps that need to be done for the project **to build successfully** and for the library functions **to work properly.**
 
-# Production Deploy
+# Production Backend Deploy
 
 Here is a **step-by-step guide** to deploying an `API server` and a `Telegram bot` on your server.
 
@@ -482,7 +482,7 @@ Allows you to clone public/private repositories to your server.
 sudo apt update
 ```
 
-2. Installing a module
+2. Installing a module:
 ```
 sudo apt install git -y
 ```
@@ -526,7 +526,7 @@ apt-cache policy docker-ce
 sudo apt install docker-ce -y
 ```
 
-### Installing the Make module
+### Installing Make
 
 Allows you to quickly deploy/stop/delete your projects on the server, without having to type a bunch of commands.
 
@@ -535,7 +535,7 @@ Allows you to quickly deploy/stop/delete your projects on the server, without ha
 sudo apt update
 ```
 
-2. Installing a package
+2. Installing a package:
 ```
 sudo apt install build-essential -y
 ```
@@ -554,12 +554,12 @@ The web server, which in this example will `proxy all requests` to your API serv
 sudo apt update
 ```
 
-2. Installing a package
+2. Installing a package:
 ```
 sudo apt install nginx -y
 ```
 
-3. Now it is necessary to check the status of Nginx operation
+3. Now it is necessary to check the status of Nginx operation:
 ```
 sudo systemctl status nginx
 ```
@@ -569,9 +569,175 @@ sudo systemctl status nginx
 http://YOUR_SERVER_IP_ADDRESS
 ```
 
-After the correct installation, you need to make sure that port 80 is open on the server.
-If Nginx is successfully installed and working correctly, you will see a welcome page.
+After the correct installation, you need to make sure that `port 80` is open on the server.
+If Nginx is successfully installed and working correctly, you will **see a welcome page.**
 
+### Configuring HTTPS connection:
+
+Telegram has very strict rules regarding requests to third-party resources from Telegram bots. Therefore, it is necessary to add the ability to connect to the API server via HTTPS 
+
+**P.S:** In general, this is a very important point, because with HTTP connection data can be quietly listened to by third parties, which entails information leakage and danger for your users).
+
+To proceed, you need to **register a domain** for your server so that you can install the certificate there.
+
+You can do this [right here](https://my.aeza.net/order/domain) if you have already clicked the link and received a [nice discount at checkout](https://aeza.net/?ref=482600).
+
+Once you have connected your server's IP address in the domain settings, you can start setting up the connection.
+If you don't have a reliable SSL certificate, you can generate one with a few commands.
+
+#### Install Certbot
+
+1. Update the list of packages on the server:
+```
+sudo apt update
+```
+
+2. Install the package and plugin for Nginx:
+```
+sudo apt install certbot python3-certbot-nginx -y
+``` 
+
+3. Obtaining SSL certificate:
+```
+sudo certbot --nginx -d YOUR_DOMAIN_NAME
+```
+
+In the `YOUR_DOMAIN_NAME` field, write the address of the leased domain that you should have previously purchased at this point.
+
+Follow the on-screen instructions to complete the process, many of which you can skip by pressing the `Enter` button. 
+Certbot will prompt you to choose whether to redirect `HTTP` traffic to `HTTPS`, which is recommended for security.
+
+### Configuring API server configuration
+
+Now you need to go to the nginx configuration directory and create a configuration for your API server:
+```
+sudo nano /etc/nginx/sites-available/
+```
+
+Create a configuration with the name of your domain:
+```
+nano YOUR_DOMAIN_NAME
+```
+
+Copy and paste this configuration data, but replace `YOUR_DOMAIN_NAME` with your domain:
+
+```nginx
+server
+{
+   listen 443 ssl;
+   server_name YOUR_DOMAIN_NAME;
+
+   ssl_certificate /etc/letsencrypt/live/benizon.shop/fullchain.pem; # managed by Certbot
+   ssl_certificate_key /etc/letsencrypt/live/benizon.shop/privkey.pem; # managed by Certbot
+   include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+   ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+   location / {
+     proxy_pass http://localhost:1000;
+     proxy_set_header Host $host;
+     proxy_set_header X-Real-IP $remote_addr;
+     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+     proxy_set_header X-Forwarded-Proto $scheme;
+
+     add_header 'Access-Control-Allow-Origin' '*' always;
+     add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+     add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization' always;
+
+     if ($request_method = OPTIONS) {
+      return 204;
+     }
+
+     add_header 'X-Content-Type-Options' 'nosniff';
+     add_header 'Server' 'nginx';
+     add_header 'Cache-Control' 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+   }
+}
+
+server
+{
+    listen 80;
+    server_name YOUR_DOMAIN_NAME;
+
+    if ($host = YOUR_DOMAIN_NAME) {
+        return 301 https://$host$request_uri; # managed by Certbot
+    }
+
+    location / {
+      return 301 https://$host$request_uri;
+    }
+}
+```
+
+Also, in addition to setting up nginx, in this configuration we set up mandatory headers so that the connection succeeds and is not blocked.
+**IMPORTANT:** Failure to do so will result in an attempt to send `any GET/POST` request from your Web App **inside Telegram being blocked.**
+
+### Deploy API Server
+
+After installing all the necessary modules and setting up the necessary configurations, you can start to deploy the API server
+
+Go to the main directory of the server
+```
+cd /root/
+```
+
+Clone the repository with the API server into the root directory:
+```
+git clone https://github.com/MrVeit/Veittech-UnigramPayment-ServerAPI.git
+```
+
+Get the contents of the directory:
+```
+ls -l
+```
+
+Navigate to the server API files:
+```
+cd Veittech-UnigramPayment-ServerAPI/src
+```
+
+Now we need to create a file with the storage of environment variables that are used in the project:
+```
+nano .env
+```
+
+We have already created it earlier [at this stage](https://github.com/MrVeit/Veittech-UnigramPayment?tab=readme-ov-file#initializing-backend-components), so copy and paste these values:
+The value of the `SERVER_DOMAIN` variable replace it with the domain of your server that you previously rented, binding it to the server.
+
+Start building and creating a docker container with an API server with a single command:
+```
+make run
+```
+
+After the deploy, check the docker container logs to make sure no errors occurred:
+```
+make logs
+```
+
+In case the launch **was successful**, you will see only 1 line in the logs: `API Server running at YOUR_DOMAIN_NAME`.
+
+### Deploy a Telegram bot
+
+Once the basic set of modules has been installed, you can start running one of the projects.
+
+Navigate to the main directory of the server
+```
+cd /root/
+```
+
+Clone the repository with the telegram bot into the root directory of the server:
+```
+git clone https://github.com/MrVeit/Veittech-UnigramPayment-TelegramBot.git
+```
+
+Get the contents of the directory:
+```
+ls -l
+```
+
+Navigate to the Telegram Bot files:
+```
+cd Veittech-UnigramPayment-TelegramBot/src
+```
 
 
 # Donations
