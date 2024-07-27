@@ -629,7 +629,7 @@ Certbot will prompt you to choose whether to redirect `HTTP` traffic to `HTTPS`,
 
 1. Now you need to go to the nginx configuration directory and create a configuration for your API server:
 ```
-sudo nano /etc/nginx/sites-available/
+cd /etc/nginx/sites-available/
 ```
 
 2. Create a configuration with the name of your domain:
