@@ -71,3 +71,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /Scenes
 /TextMesh Pro
+/Assets
+/Resources
+/Unigram Payment
