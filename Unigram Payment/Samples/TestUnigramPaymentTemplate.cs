@@ -115,19 +115,21 @@ namespace TestExample
             SetInteractableStateByButton(_refundStarsButton, false);
         }
 
-        private void PaymentInvoiceCreated(string url)
+        private void PaymentInvoiceCreated(string itemPayloadId, string url)
         {
             _latestInvoiceLink = url;
 
-            _debugBar.text = $"{DEBUG_PREFIX} The link to purchase the test item has been successfully generated: {url}";
+            _debugBar.text = $"{DEBUG_PREFIX} The link to purchase the" +
+                $" test item {itemPayloadId} has been successfully generated: {url}";
 
             SetInteractableStateByButton(_createInvoiceButton, true);
         }
 
-        private void PaymentInvoiceCreateFailed()
+        private void PaymentInvoiceCreateFailed(string itemPayloadId)
         {
-            _debugBar.text = $"{DEBUG_PREFIX} Failed to create a payment link for one of the following reasons:" +
-                " SDK is not initialized, API server is not started, incorrectly filled in product data.";
+            _debugBar.text = $"{DEBUG_PREFIX} Failed to create a payment link for" +
+                $" item {itemPayloadId} for one of the following reasons:" +
+                 $" SDK is not initialized, API server is not started, incorrectly filled in product data.";
         }
 
         private void TargetItemPurchased(PaymentReceiptData receipt)
@@ -142,13 +144,14 @@ namespace TestExample
             SetInteractableStateByButton(_refundStarsButton, true);
         }
 
-        private void TargetItemPurchaseFailed()
+        private void TargetItemPurchaseFailed(SaleableItem failedPurchaseItem)
         {
-            _debugBar.text = $"{DEBUG_PREFIX} Failed to purchase an item for one of the following reasons: " +
-                "SDK not initialized, API server not configured, or incorrect item data entered.";
+            _debugBar.text = $"{DEBUG_PREFIX} Failed to purchase an item {failedPurchaseItem.Name}" +
+                $" for one of the following reasons: SDK not initialized," +
+                $" API server not configured, or incorrect item data entered.";
         }
 
-        private void RefundTransactionFinished(bool isSuccess)
+        private void RefundTransactionFinished(string transactionId, bool isSuccess)
         {
             if (isSuccess)
             {

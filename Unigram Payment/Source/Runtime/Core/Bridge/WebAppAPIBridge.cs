@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using System.Runtime.InteropServices;
 using AOT;
 using UnigramPayment.Runtime.Utils.Debugging;
@@ -134,8 +135,21 @@ namespace UnigramPayment.Core
         internal static void OpenPurchaseInvoice(string url, 
             Action<string, string> onInvoiceSuccessfullyPaid, Action<string> onInvoicePayFailed)
         {
-            _onInvoiceSuccessfullyPaid = onInvoiceSuccessfullyPaid;
-            _onInvoicePayFailed = onInvoicePayFailed;
+            _onInvoiceSuccessfullyPaid = (status, paymentReceipt) =>
+            {
+                onInvoiceSuccessfullyPaid?.Invoke(status, paymentReceipt);
+
+                _onInvoiceSuccessfullyPaid = null; 
+                _onInvoicePayFailed = null;  
+            };
+
+            _onInvoicePayFailed = (status) =>
+            {
+                onInvoicePayFailed?.Invoke(status);
+
+                _onInvoiceSuccessfullyPaid = null; 
+                _onInvoicePayFailed = null;   
+            };
 
             OpenInvoice(url, OnInvoiceSuccessfullyPaid, OnInvoicePayFailed);
         }

@@ -49,6 +49,8 @@ namespace UnigramPayment.Runtime.Core
         [Tooltip("Store all items for purchase, to add new ones call 'Create -> Unigram Payment -> Saleable Item' and add it to the list.")]
         [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
 
+        private SaleableItem _currentPurchaseItem;
+
         private PaymentReceiptData _lastPaymentReceipt;
 
         /// <summary>
@@ -136,7 +138,8 @@ namespace UnigramPayment.Runtime.Core
             AuthorizeClient((tokenClaimed) =>
             {
                 OnInitialize(true);
-            },() =>
+            },
+            () =>
             {
                 OnInitialize(false);
             });
@@ -158,18 +161,20 @@ namespace UnigramPayment.Runtime.Core
                 return;
             }
 
+            _currentPurchaseItem = item;
+
             StartCoroutine(BotAPIBridge.CreateInvoice(item, (invoiceLink) =>
             {
                 LastInvoiceLink = invoiceLink;
 
                 if (LastInvoiceLink == null)
                 {
-                    OnInvoiceLinkCreateFail();
+                    OnInvoiceLinkCreateFail(item.Id);
 
                     return;
                 }
 
-                OnInvoiceLinkCreate(LastInvoiceLink);
+                OnInvoiceLinkCreate(item.Id, LastInvoiceLink);
             }));
         }
 
@@ -189,7 +194,7 @@ namespace UnigramPayment.Runtime.Core
                     {
                         if (receipt == null)
                         {
-                            OnItemPurchaseFail();
+                            OnItemPurchaseFail(_currentPurchaseItem);
 
                             return;
                         }
@@ -199,7 +204,7 @@ namespace UnigramPayment.Runtime.Core
                 }
                 else if (status is PaymentStatus.cancelled or PaymentStatus.failed)
                 {
-                    OnItemPurchaseFail();
+                    OnItemPurchaseFail(_currentPurchaseItem);
                 }
             });
         }
@@ -217,7 +222,7 @@ namespace UnigramPayment.Runtime.Core
 
             StartCoroutine(BotAPIBridge.RefundPayment(telegramId, receipt.TransactionId, (isSuccess) =>
             {
-                OnRefundTransactionFinish(isSuccess);
+                OnRefundTransactionFinish(LastRefundedTransaction, isSuccess);
 
                 UnigramPaymentLogger.Log($"Refund process finished with result: {isSuccess}");
             }));
@@ -327,12 +332,15 @@ namespace UnigramPayment.Runtime.Core
         private void OnSessionTokenRefresh() => OnSessionTokenRefreshed?.Invoke();
         private void OnSessionTokenRefshFail() => OnSessionTokenRefreshFailed?.Invoke();
 
-        private void OnInvoiceLinkCreate(string invoiceUrl) => OnInvoiceLinkCreated?.Invoke(invoiceUrl);
-        private void OnInvoiceLinkCreateFail() => OnInvoiceLinkCreateFailed?.Invoke();
+        private void OnInvoiceLinkCreate(string itemId,
+            string invoiceUrl) => OnInvoiceLinkCreated?.Invoke(itemId, invoiceUrl);
+        private void OnInvoiceLinkCreateFail(string itemId) => OnInvoiceLinkCreateFailed?.Invoke(itemId);
 
         private void OnItemPurchase(PaymentReceiptData receipt) => OnItemPurchased?.Invoke(receipt);
-        private void OnItemPurchaseFail() => OnItemPurchaseFailed?.Invoke();
+        private void OnItemPurchaseFail(SaleableItem failedPurchaseItem) =>
+            OnItemPurchaseFailed?.Invoke(failedPurchaseItem);
 
-        private void OnRefundTransactionFinish(bool isSuccess) => OnRefundTransactionFinished?.Invoke(isSuccess);
+        private void OnRefundTransactionFinish(string transactionId,
+            bool isSuccess) => OnRefundTransactionFinished?.Invoke(transactionId, isSuccess);
     }
 }
