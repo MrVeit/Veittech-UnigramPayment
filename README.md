@@ -217,16 +217,16 @@ public sealed class UsageTemplate : MonoBehaviour
         }
     }
 
-    private void PaymentInvoiceCreated(string invoiceLink)
+    private void PaymentInvoiceCreated(string itemPayloadId, string invoiceLink)
     {
         _latestInvoice = invoiceLink;
 
-        Debug.Log("The link to purchase the test item has been successfully generated: {url}");
+        Debug.Log($"The link to purchase the test item {itemPayloadId} has been successfully generated: {url}");
     }
 
-    private void PaymentInvoiceCreateFailed()
+    private void PaymentInvoiceCreateFailed(string itemPayloadId)
     {
-        Debug.LogError("Failed to create a payment link for one of the following reasons");
+        Debug.LogError($"Failed to create a payment link for item {itemPayloadId} for one of the following reasons");
     }
 }
 ```
@@ -308,16 +308,16 @@ public sealed class UsageTemplate : MonoBehaviour
         }
     }
 
-    private void PaymentInvoiceCreated(string invoiceLink)
+    private void PaymentInvoiceCreated(string itemPayloadId, string invoiceLink)
     {
         _latestInvoice = invoiceLink;
 
-        Debug.Log($"The link to purchase the test item has been successfully generated: {url}");
+        Debug.Log($"The link to purchase the test item {itemPayloadId} has been successfully generated: {url}");
     }
 
-    private void PaymentInvoiceCreateFailed()
+    private void PaymentInvoiceCreateFailed(string itemPayloadId)
     {
-        Debug.LogError("Failed to create a payment link for one of the following reasons");
+        Debug.LogError($"Failed to create a payment link for item {itemPayloadId} for one of the following reasons");
     }
 
     private void ItemPurchased(PaymentReceiptData receipt)
@@ -329,9 +329,9 @@ public sealed class UsageTemplate : MonoBehaviour
                 $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}");
     }
 
-    private void ItemPurchaseFailed()
+    private void ItemPurchaseFailed(SaleableItem failedPurchaseItem)
     {
-        Debug.LogError("Failed to purchase an item for one of the following reasons");
+        Debug.LogError($"Failed to purchase an item {failedPurchaseItem.Name} for one of the following reasons");
     }
 }
 ```
@@ -421,16 +421,16 @@ public sealed class UsageTemplate : MonoBehaviour
         }
     }
 
-    private void PaymentInvoiceCreated(string invoiceLink)
+    private void PaymentInvoiceCreated(string itemPayloadId, string invoiceLink)
     {
         _latestInvoice = invoiceLink;
 
-        Debug.Log($"The link to purchase the test item has been successfully generated: {url}");
+        Debug.Log($"The link to purchase the test item {itemPayloadId} has been successfully generated: {url}");
     }
 
-    private void PaymentInvoiceCreateFailed()
+    private void PaymentInvoiceCreateFailed(string itemPayloadId)
     {
-        Debug.LogError("Failed to create a payment link for one of the following reasons");
+        Debug.LogError($"Failed to create a payment link for item {itemPayloadId} for one of the following reasons");
     }
 
     private void ItemPurchased(PaymentReceiptData receipt)
@@ -442,17 +442,17 @@ public sealed class UsageTemplate : MonoBehaviour
                 $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}");
     }
 
-    private void ItemPurchaseFailed()
+    private void ItemPurchaseFailed(SaleableItem failedPurchaseItem)
     {
-        Debug.LogError("Failed to purchase an item for one of the following reasons");
+        Debug.LogError($"Failed to purchase an item {failedPurchaseItem.Name} for one of the following reasons");
     }
 
-    private void RefundTransactionFinished(bool isSuccess)
+    private void RefundTransactionFinished(string transactionId, bool isSuccess)
     {
         if (isSuccess)
         {
             Debug.Log("The process of refunding the purchased stars through the transaction with" +
-                    $" the identifier `{_unigramPayment.LastRefundedTransaction}` " +
+                    $" the identifier `{transactionId}` " +
                     $"has been completed successfully");
         }
     }
@@ -526,7 +526,7 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o 
 
 3. Now we need to add the docker repository to APT:
 ```
-echo “deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable” | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 ```
 
 4. Update the list of packages on the server:
@@ -629,7 +629,7 @@ Certbot will prompt you to choose whether to redirect `HTTP` traffic to `HTTPS`,
 
 1. Now you need to go to the nginx configuration directory and create a configuration for your API server:
 ```
-sudo nano /etc/nginx/sites-available/
+cd /etc/nginx/sites-available/
 ```
 
 2. Create a configuration with the name of your domain:
@@ -645,8 +645,8 @@ server
    listen 443 ssl;
    server_name YOUR_DOMAIN_NAME;
 
-   ssl_certificate /etc/letsencrypt/live/benizon.shop/fullchain.pem; # managed by Certbot
-   ssl_certificate_key /etc/letsencrypt/live/benizon.shop/privkey.pem; # managed by Certbot
+   ssl_certificate /etc/letsencrypt/live/YOUR_DOMAIN_NAME/fullchain.pem; # managed by Certbot
+   ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN_NAME/privkey.pem; # managed by Certbot
    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
