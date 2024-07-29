@@ -217,16 +217,16 @@ public sealed class UsageTemplate : MonoBehaviour
         }
     }
 
-    private void PaymentInvoiceCreated(string invoiceLink)
+    private void PaymentInvoiceCreated(string itemPayloadId, string invoiceLink)
     {
         _latestInvoice = invoiceLink;
 
-        Debug.Log("The link to purchase the test item has been successfully generated: {url}");
+        Debug.Log($"The link to purchase the test item {itemPayloadId} has been successfully generated: {url}");
     }
 
-    private void PaymentInvoiceCreateFailed()
+    private void PaymentInvoiceCreateFailed(string itemPayloadId)
     {
-        Debug.LogError("Failed to create a payment link for one of the following reasons");
+        Debug.LogError($"Failed to create a payment link for item {itemPayloadId} for one of the following reasons");
     }
 }
 ```
@@ -308,16 +308,16 @@ public sealed class UsageTemplate : MonoBehaviour
         }
     }
 
-    private void PaymentInvoiceCreated(string invoiceLink)
+    private void PaymentInvoiceCreated(string itemPayloadId, string invoiceLink)
     {
         _latestInvoice = invoiceLink;
 
-        Debug.Log($"The link to purchase the test item has been successfully generated: {url}");
+        Debug.Log($"The link to purchase the test item {itemPayloadId} has been successfully generated: {url}");
     }
 
-    private void PaymentInvoiceCreateFailed()
+    private void PaymentInvoiceCreateFailed(string itemPayloadId)
     {
-        Debug.LogError("Failed to create a payment link for one of the following reasons");
+        Debug.LogError($"Failed to create a payment link for item {itemPayloadId} for one of the following reasons");
     }
 
     private void ItemPurchased(PaymentReceiptData receipt)
@@ -329,9 +329,9 @@ public sealed class UsageTemplate : MonoBehaviour
                 $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}");
     }
 
-    private void ItemPurchaseFailed()
+    private void ItemPurchaseFailed(SaleableItem failedPurchaseItem)
     {
-        Debug.LogError("Failed to purchase an item for one of the following reasons");
+        Debug.LogError($"Failed to purchase an item {failedPurchaseItem.Name} for one of the following reasons");
     }
 }
 ```
@@ -421,16 +421,16 @@ public sealed class UsageTemplate : MonoBehaviour
         }
     }
 
-    private void PaymentInvoiceCreated(string invoiceLink)
+    private void PaymentInvoiceCreated(string itemPayloadId, string invoiceLink)
     {
         _latestInvoice = invoiceLink;
 
-        Debug.Log($"The link to purchase the test item has been successfully generated: {url}");
+        Debug.Log($"The link to purchase the test item {itemPayloadId} has been successfully generated: {url}");
     }
 
-    private void PaymentInvoiceCreateFailed()
+    private void PaymentInvoiceCreateFailed(string itemPayloadId)
     {
-        Debug.LogError("Failed to create a payment link for one of the following reasons");
+        Debug.LogError($"Failed to create a payment link for item {itemPayloadId} for one of the following reasons");
     }
 
     private void ItemPurchased(PaymentReceiptData receipt)
@@ -442,17 +442,17 @@ public sealed class UsageTemplate : MonoBehaviour
                 $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}");
     }
 
-    private void ItemPurchaseFailed()
+    private void ItemPurchaseFailed(SaleableItem failedPurchaseItem)
     {
-        Debug.LogError("Failed to purchase an item for one of the following reasons");
+        Debug.LogError($"Failed to purchase an item {failedPurchaseItem.Name} for one of the following reasons");
     }
 
-    private void RefundTransactionFinished(bool isSuccess)
+    private void RefundTransactionFinished(string transactionId, bool isSuccess)
     {
         if (isSuccess)
         {
             Debug.Log("The process of refunding the purchased stars through the transaction with" +
-                    $" the identifier `{_unigramPayment.LastRefundedTransaction}` " +
+                    $" the identifier `{transactionId}` " +
                     $"has been completed successfully");
         }
     }
