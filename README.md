@@ -52,10 +52,10 @@ For the API Server repository environment variable, you need to fill in the foll
 SERVER_DOMAIN = http://localhost
 
 BOT_TOKEN = YOUR_BOT_TOKEN
-BOT_SECRET_KEY = “test_app_unigram_payment”
+BOT_SECRET_KEY = "test_app_unigram_payment"
 
-CLIENT_SECRET_KEY = “test_unity_unigram”
-CLIENT_JWT_SIGN = “unigram_payment-unity”
+CLIENT_SECRET_KEY = "test_unity_unigram"
+CLIENT_JWT_SIGN = "unigram_payment-unity"
 ```
 
 - The `SERVER_DOMAIN` variable is a link to your domain where the API server is running, for the purposes of testing we will use the local address `http://localhost`,
@@ -75,7 +75,7 @@ For the Telegram bot, the environment variables will look like this:
 BOT_TOKEN = YOUR_BOT_TOKEN
 SERVER_DOMAIN = http://localhost:1000
 
-AUTHORIZATION_SECRET_KEY = “test_app_unigram_payment”
+AUTHORIZATION_SECRET_KEY = "test_app_unigram_payment"
 ```
 
 - The `BOT_TOKEN` variable should contain the bot token that you have previously filled in and inserted into a variable of the same name for the server API.
