@@ -141,7 +141,7 @@ public sealed class UsageTemplate : MonoBehaviour
 }
 ```
 
-### Possible problems:
+### Possible problems
 
 After writing a script to initialize the SDK. You may encounter a number of errors because the configuration of the connection to the test API server is not yet set up.
 
