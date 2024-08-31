@@ -1,8 +1,11 @@
 # UNIGRAM PAYMENT
 
-[![License](https://img.shields.io/github/license/MrVeit/Veittech-UnigramPayment?color=318CE7&style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/github/package-json/v/MrVeit/Veittech-UnigramPayment?color=318CE7&style=flat-square)](package.json)
-[![Unity](https://img.shields.io/badge/Unity-2020.1+-2296F3.svg?color=318CE7&style=flat-square)](https://unity.com/releases/editor/archive)
+[![Unity](https://img.shields.io/badge/Unity-2020.1+-2296F3.svg?color=318CE7&style=flat-square&logo=Unity&logoColor=E0FFFF)](https://unity.com/releases/editor/archive)
+[![Version](https://img.shields.io/github/package-json/v/MrVeit/Veittech-UnigramPayment?color=318CE7&style=flat-square&logo=buffer&logoColor=E0FFFF)](package.json)
+[![License](https://img.shields.io/github/license/MrVeit/Veittech-UnigramPayment?color=318CE7&style=flat-square&logo=github&logoColor=E0FFFF)](LICENSE)
+![Last commit](https://img.shields.io/github/last-commit/MrVeit/Veittech-UnigramPayment/master?color=318CE7&style=flat-square&logo=alwaysdata&logoColor=E0FFFF)
+![Last release](https://img.shields.io/github/release-date/MrVeit/Veittech-UnigramPayment?color=318CE7&style=flat-square&logo=Dropbox&logoColor=E0FFFF)
+![Downloads](https://img.shields.io/github/downloads/MrVeit/Veittech-UnigramPayment/total?color=318CE7&style=flat-square&logo=codeigniter&logoColor=E0FFFF)
 
 <p align="left">
  <img width="600px" src="Assets/headerLibraryLogo.png" alt="qr"/>
@@ -52,10 +55,10 @@ For the API Server repository environment variable, you need to fill in the foll
 SERVER_DOMAIN = http://localhost
 
 BOT_TOKEN = YOUR_BOT_TOKEN
-BOT_SECRET_KEY = “test_app_unigram_payment”
+BOT_SECRET_KEY = "test_app_unigram_payment"
 
-CLIENT_SECRET_KEY = “test_unity_unigram”
-CLIENT_JWT_SIGN = “unigram_payment-unity”
+CLIENT_SECRET_KEY = "test_unity_unigram"
+CLIENT_JWT_SIGN = "unigram_payment-unity"
 ```
 
 - The `SERVER_DOMAIN` variable is a link to your domain where the API server is running, for the purposes of testing we will use the local address `http://localhost`,
@@ -75,7 +78,7 @@ For the Telegram bot, the environment variables will look like this:
 BOT_TOKEN = YOUR_BOT_TOKEN
 SERVER_DOMAIN = http://localhost:1000
 
-AUTHORIZATION_SECRET_KEY = “test_app_unigram_payment”
+AUTHORIZATION_SECRET_KEY = "test_app_unigram_payment"
 ```
 
 - The `BOT_TOKEN` variable should contain the bot token that you have previously filled in and inserted into a variable of the same name for the server API.
@@ -141,7 +144,7 @@ public sealed class UsageTemplate : MonoBehaviour
 }
 ```
 
-### Possible problems:
+### Possible problems
 
 After writing a script to initialize the SDK. You may encounter a number of errors because the configuration of the connection to the test API server is not yet set up.
 
