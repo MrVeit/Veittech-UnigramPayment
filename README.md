@@ -650,11 +650,7 @@ server
     server_name YOUR_DOMAIN_NAME;
 
     if ($host = YOUR_DOMAIN_NAME) {
-        return 301 https://$host$request_uri; # managed by Certbot
-    }
-
-    location / {
-      return 301 https://$host$request_uri;
+        return 301 https://$host$request_uri;
     }
 }
 
