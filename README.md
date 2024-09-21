@@ -71,7 +71,7 @@ Here you can use a pair of two words or one with numbers, using any special char
 
 - The `CLIENT_SECRET_KEY` variable is the same signature key as the previous one, but for your Unity game. With it, before creating a payment request, you will need to authorize on the API server. **IMPORTANT:** It must also be stored securely and must not be public,
 
-- The `CLIENT_JWT_SIGN` variable is an additional signing key with which your Unity game, after authorizing to the API server and receiving a generated JWT token, is signed with this key. Then, when requesting other API methods, the Unity game sends this generated JWT token in the Authorizatio header, and the server decrypts the token value with this key to allow access to its functionality if the values match.
+- The `CLIENT_JWT_SIGN` variable is an additional signing key with which your Unity game, after authorizing to the API server and receiving a generated JWT token, is signed with this key. Then, when requesting other API methods, the Unity game sends this generated JWT token in the Authorization header, and the server decrypts the token value with this key to allow access to its functionality if the values match.
 
 For the Telegram bot, the environment variables will look like this:
 ```config
@@ -643,6 +643,21 @@ nano YOUR_DOMAIN_NAME
 3. Copy and paste this configuration data, but replace `YOUR_DOMAIN_NAME` with your domain:
 
 ```nginx
+
+server
+{
+    listen 80;
+    server_name YOUR_DOMAIN_NAME;
+
+    if ($host = YOUR_DOMAIN_NAME) {
+        return 301 https://$host$request_uri; # managed by Certbot
+    }
+
+    location / {
+      return 301 https://$host$request_uri;
+    }
+}
+
 server
 {
    listen 443 ssl;
@@ -653,7 +668,7 @@ server
    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
-   location / {
+   location /api {
      proxy_pass http://localhost:1000;
      proxy_set_header Host $host;
      proxy_set_header X-Real-IP $remote_addr;
@@ -672,20 +687,6 @@ server
      add_header 'Server' 'nginx';
      add_header 'Cache-Control' 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
    }
-}
-
-server
-{
-    listen 80;
-    server_name YOUR_DOMAIN_NAME;
-
-    if ($host = YOUR_DOMAIN_NAME) {
-        return 301 https://$host$request_uri; # managed by Certbot
-    }
-
-    location / {
-      return 301 https://$host$request_uri;
-    }
 }
 ```
 
@@ -707,7 +708,7 @@ sudo nginx -t
 
 6. Reboot Nginx to apply the new configuration:
 ```
-sudo systemctl reload nginx
+sudo systemctl restart nginx
 ```
 
 ## Deploy
