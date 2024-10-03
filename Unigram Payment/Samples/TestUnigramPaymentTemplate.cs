@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Newtonsoft.Json;
 using UnigramPayment.Runtime.Core;
 using UnigramPayment.Runtime.Data;
 
@@ -32,10 +33,16 @@ namespace TestExample
             _unigramPayment.OnItemPurchaseFailed += TargetItemPurchaseFailed;
 
             _unigramPayment.OnRefundTransactionFinished += RefundTransactionFinished;
+
+            _unigramPayment.OnPurchaseHistoryLoaded += OnPurchaseHistoryLoaded;
+            _unigramPayment.OnRefundHistoryLoaded += OnRefundHistoryLoaded;
         }
 
         private void OnDisable()
         {
+            _createInvoiceButton.onClick.RemoveListener(PurchaseItem);
+            _refundStarsButton.onClick.RemoveListener(Refund);
+
             _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
 
             _unigramPayment.OnInvoiceLinkCreated -= PaymentInvoiceCreated;
@@ -46,8 +53,8 @@ namespace TestExample
 
             _unigramPayment.OnRefundTransactionFinished -= RefundTransactionFinished;
 
-            _createInvoiceButton.onClick.RemoveListener(PurchaseItem);
-            _refundStarsButton.onClick.RemoveListener(Refund);
+            _unigramPayment.OnPurchaseHistoryLoaded -= OnPurchaseHistoryLoaded;
+            _unigramPayment.OnRefundHistoryLoaded -= OnRefundHistoryLoaded;
         }
 
         private void Start()
@@ -123,6 +130,9 @@ namespace TestExample
                 $" test item {itemPayloadId} has been successfully generated: {url}";
 
             SetInteractableStateByButton(_createInvoiceButton, true);
+
+            _unigramPayment.GetPurchaseHistory(15);
+            _unigramPayment.GetRefundHistory(20);
         }
 
         private void PaymentInvoiceCreateFailed(string itemPayloadId)
@@ -166,6 +176,16 @@ namespace TestExample
 
             _debugBar.text = $"{DEBUG_PREFIX} Couldn't get a refund for the stars I bought" +
                 " for one reason, they may have already been refunded.";
+        }
+
+        private void OnPurchaseHistoryLoaded(PurchaseHistoryData history)
+        {
+            Debug.Log($"Claimed purchase history: {JsonConvert.SerializeObject(history)}");
+        }
+
+        private void OnRefundHistoryLoaded(RefundHistoryData history)
+        {
+            Debug.Log($"Claimed refund history: {JsonConvert.SerializeObject(history)}");
         }
     }
 }

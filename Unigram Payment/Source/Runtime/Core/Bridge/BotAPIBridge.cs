@@ -8,6 +8,7 @@ using UnigramPayment.Runtime.Common;
 using UnigramPayment.Runtime.Utils;
 using UnigramPayment.Runtime.Utils.Debugging;
 using UnigramPayment.Storage.Data;
+using System.Diagnostics;
 
 namespace UnigramPayment.Core
 {
@@ -25,6 +26,48 @@ namespace UnigramPayment.Core
 
         private static readonly string API_SECRET_KEY = RUNTIME_STORAGE.ClientSecretKey;
         private static readonly string API_SERVER_LINK = RUNTIME_STORAGE.ServerUrl;
+
+        internal static IEnumerator GetTime(Action<ServerTimeData> unixTickClaimed)
+        {
+            if (!IsExistServerLink())
+            {
+                yield break;
+            }
+
+            var url = APIServerRequests.GetServerTimeLink(API_SERVER_LINK);
+
+            using (UnityWebRequest request = new(url, UnityWebRequest.kHttpVerbGET))
+            {
+                WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
+
+                yield return request.SendWebRequest();
+
+                if (request.result == WebRequestUtils.SUCCESS)
+                {
+                    var responseResult = request.downloadHandler.text;
+                    var timeResponse = JsonConvert.DeserializeObject<ServerTimeData>(responseResult);
+
+                    unixTickClaimed?.Invoke(timeResponse);
+
+                    UnigramPaymentLogger.Log($"Server tick successfully claimed: {timeResponse.UnixTick}");
+
+                    yield break;
+                }
+                else
+                {
+                    var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
+                    var code = request.responseCode;
+
+                    RefreshTokenIfSessionExpired(errorMessage);
+
+                    unixTickClaimed?.Invoke(null);
+
+                    UnigramPaymentLogger.LogError($"Failed to retrieve customer transaction data, reason: {errorMessage}, status code: {code}");
+
+                    yield break;
+                }
+            }
+        }
 
         internal static IEnumerator AuthorizeClient(Action<string> authorizationTokenClaimed)
         {
@@ -128,7 +171,8 @@ namespace UnigramPayment.Core
 
                     invoiceLinkCreated?.Invoke(invoiceLink);
 
-                    UnigramPaymentLogger.Log($"The invoice for the purchase of stars has been successfully created: {invoiceLink}");
+                    UnigramPaymentLogger.Log($"The invoice for the purchase" +
+                        $" of stars has been successfully created: {invoiceLink}");
 
                     yield break;
                 }
@@ -186,7 +230,8 @@ namespace UnigramPayment.Core
 
                     refundProcessFinished?.Invoke(true);
 
-                    UnigramPaymentLogger.Log($"The stars previously purchased by the user were successfully returned with status: {responseResult}");
+                    UnigramPaymentLogger.Log($"The stars previously purchased by" +
+                        $"the user were successfully returned with status: {responseResult}");
 
                     yield break;
                 }
@@ -220,7 +265,6 @@ namespace UnigramPayment.Core
             using (UnityWebRequest request = new(url, UnityWebRequest.kHttpVerbGET))
             {
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
-
                 WebRequestUtils.SetRequestHeader(request, HEADER_AUTHORIZATION,
                     WebRequestUtils.GetAuthorizationHeaderValue(GetSessionToken()));
 
@@ -247,6 +291,79 @@ namespace UnigramPayment.Core
                     paymentReceiptClaimed?.Invoke(null);
 
                     UnigramPaymentLogger.LogError($"Failed to retrieve customer transaction data, reason: {errorMessage}, status code: {code}");
+
+                    yield break;
+                }
+            }
+        }
+
+        internal static IEnumerator GetPurchaseHistory(long amount,
+            long totalPass, Action<PurchaseHistoryData> purchaseHistoryClaimed)
+        {
+            return GetTransactionHistory(amount, totalPass,
+                APIServerRequests.GetPurchaseHistoryLink(API_SERVER_LINK), purchaseHistoryClaimed);
+        }
+
+        internal static IEnumerator GetRefundHistory(long amount,
+            long totalPass, Action<RefundHistoryData> refundHistoryClaimed)
+        {
+            return GetTransactionHistory(amount, totalPass,
+                APIServerRequests.GetRefundHistoryLink(API_SERVER_LINK), refundHistoryClaimed);
+        }
+
+        private static IEnumerator GetTransactionHistory<T>(long amount,
+            long totalPass, string apiUrl, Action<T> historyClaimed) where T : class
+        {
+            if (!IsExistServerLink())
+            {
+                yield break;
+            }
+
+            var url = apiUrl;
+
+            var historyPayload = new TransactionHistoryPayloadData()
+            {
+                Amount = amount,
+                TotalPass = totalPass,
+            };
+
+            string jsonPayload = JsonConvert.SerializeObject(historyPayload);
+
+            using (UnityWebRequest request = new(url, UnityWebRequest.kHttpVerbGET))
+            {
+                UnigramPaymentLogger.Log(apiUrl);
+
+                var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(jsonPayload);
+
+                WebRequestUtils.SetUploadHandler(request, WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
+                WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
+
+                WebRequestUtils.SetRequestHeader(request, HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
+                WebRequestUtils.SetRequestHeader(request, HEADER_AUTHORIZATION,
+                    WebRequestUtils.GetAuthorizationHeaderValue(GetSessionToken()));
+
+                yield return request.SendWebRequest();
+
+                if (request.result == WebRequestUtils.SUCCESS)
+                {
+                    var responseResult = request.downloadHandler.text;
+                    var historyData = JsonConvert.DeserializeObject<T>(responseResult);
+
+                    historyClaimed?.Invoke(historyData);
+
+                    yield break;
+                }
+                else
+                {
+                    var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
+                    var code = request.responseCode;
+
+                    RefreshTokenIfSessionExpired(errorMessage);
+
+                    historyClaimed?.Invoke(null);
+
+                    UnigramPaymentLogger.LogError($"Failed to retrieve transaction history," +
+                        $"reason: {errorMessage}, status code: {code}");
 
                     yield break;
                 }
