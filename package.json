@@ -1,6 +1,6 @@
 {
     "name": "com.veittech.unigram.payment",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "displayName": "Unigram Payment",
     "description": "A library for making payments inside web applications made on Unity using a new internal currency - Telegram Stars.",
     "unity": "2020.3",
