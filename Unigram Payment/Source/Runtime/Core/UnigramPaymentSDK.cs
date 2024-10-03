@@ -51,7 +51,7 @@ namespace UnigramPayment.Runtime.Core
 
         private SaleableItem _currentPurchaseItem;
 
-        private PaymentReceiptData _lastPaymentReceipt;
+        private SuccessfulPaymentData _lastPaymentReceipt;
 
         /// <summary>
         /// Access token to the API server to work with the payment module.
@@ -196,7 +196,7 @@ namespace UnigramPayment.Runtime.Core
         /// This call opens the invoice that was previously created when `CreateInvoice(SaleableItem item)` was called.
         /// </summary>
         /// <param name="invoiceUrl">Generated payment link</param>
-        public void OpenInvoice(string invoiceUrl)
+        public void OpenInvoice(string itemId, string invoiceUrl)
         {
             OpenPurchaseInvoice(invoiceUrl, (status, message) =>
             {
@@ -204,7 +204,7 @@ namespace UnigramPayment.Runtime.Core
 
                 if (status == PaymentStatus.paid)
                 {
-                    GetPaymentReceipt((receipt) =>
+                    GetPaymentReceipt(itemId, (receipt) =>
                     {
                         if (receipt == null)
                         {
@@ -215,8 +215,6 @@ namespace UnigramPayment.Runtime.Core
 
                         OnItemPurchase(receipt);
                     });
-
-                    return;
                 }
                 else if (status is PaymentStatus.cancelled or PaymentStatus.failed)
                 {
@@ -229,14 +227,11 @@ namespace UnigramPayment.Runtime.Core
         /// Starting the process of returning previously purchased stars
         /// </summary>
         /// <param name="receipt">Link to check for payment of previously purchased telegram stars</param>
-        public void Refund(PaymentReceiptData receipt)
+        public void Refund(SuccessfulPaymentData receipt)
         {
-            var parsedTelegramId = WebRequestUtils.ParseTelegramId(receipt.BuyerId);
-            var telegramId = int.Parse(parsedTelegramId);
-
             LastRefundedTransaction = receipt.TransactionId;
 
-            StartCoroutine(BotAPIBridge.RefundPayment(telegramId, 
+            StartCoroutine(BotAPIBridge.RefundPayment(receipt.BuyerId, 
                 receipt.TransactionId, (isSuccess) =>
             {
                 OnRefundTransactionFinish(LastRefundedTransaction, isSuccess);
@@ -340,7 +335,6 @@ namespace UnigramPayment.Runtime.Core
             }));
         }
 
-
         private void OpenPurchaseInvoice(string invoiceLink,
             Action<PaymentStatus, string> invoiceClosed)
         {
@@ -370,15 +364,16 @@ namespace UnigramPayment.Runtime.Core
             });
         }
 
-        private void GetPaymentReceipt(Action<PaymentReceiptData> paymentReceiptDataClaimed)
+        private void GetPaymentReceipt(string itemId, 
+            Action<SuccessfulPaymentData> paymentReceiptDataClaimed)
         {
-            StartCoroutine(BotAPIBridge.GetPaymentReceipt((receipt) =>
+            StartCoroutine(BotAPIBridge.GetPaymentReceipt(itemId, (receipt) =>
             {
                 _lastPaymentReceipt = receipt;
 
                 paymentReceiptDataClaimed?.Invoke(_lastPaymentReceipt);
 
-                UnigramPaymentLogger.Log($"Received data about the transaction {receipt.TransactionId} made with the identifier {receipt.InvoicePayload}");
+                UnigramPaymentLogger.Log($"Received data about the transaction {receipt.TransactionId} made with the identifier {receipt.PayloadItem}");
             }));
         }
 
@@ -410,7 +405,7 @@ namespace UnigramPayment.Runtime.Core
             string invoiceUrl) => OnInvoiceLinkCreated?.Invoke(itemId, invoiceUrl);
         private void OnInvoiceLinkCreateFail(string itemId) => OnInvoiceLinkCreateFailed?.Invoke(itemId);
 
-        private void OnItemPurchase(PaymentReceiptData receipt) => OnItemPurchased?.Invoke(receipt);
+        private void OnItemPurchase(SuccessfulPaymentData receipt) => OnItemPurchased?.Invoke(receipt);
         private void OnItemPurchaseFail(SaleableItem failedPurchaseItem) =>
             OnItemPurchaseFailed?.Invoke(failedPurchaseItem);
 

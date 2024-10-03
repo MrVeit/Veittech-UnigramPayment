@@ -193,7 +193,7 @@ namespace UnigramPayment.Core
             }
         }
 
-        internal static IEnumerator RefundPayment(int buyerId,
+        internal static IEnumerator RefundPayment(long buyerId,
             string transactionId, Action<bool> refundProcessFinished)
         {
             if (!IsExistServerLink())
@@ -253,7 +253,8 @@ namespace UnigramPayment.Core
             }
         }
 
-        internal static IEnumerator GetPaymentReceipt(Action<PaymentReceiptData> paymentReceiptClaimed)
+        internal static IEnumerator GetPaymentReceipt(string itemId,
+            Action<SuccessfulPaymentData> paymentReceiptClaimed)
         {
             if (!IsExistServerLink())
             {
@@ -262,9 +263,23 @@ namespace UnigramPayment.Core
 
             var url = APIServerRequests.GetPaymentReceiptLink(API_SERVER_LINK);
 
+            var invoiceData = new BuyerInvoiceData()
+            {
+                TelegramId = WebAppAPIBridge.GetTelegramUser().Id,
+                PurchasedItemId = itemId,
+            };
+
+            string jsonPayload = JsonConvert.SerializeObject(invoiceData);
+
+            UnigramPaymentLogger.Log($"Product data for confirm purchase: {jsonPayload}");
+
             using (UnityWebRequest request = new(url, UnityWebRequest.kHttpVerbGET))
             {
+                var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(jsonPayload);
+
+                WebRequestUtils.SetUploadHandler(request, WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
+
                 WebRequestUtils.SetRequestHeader(request, HEADER_AUTHORIZATION,
                     WebRequestUtils.GetAuthorizationHeaderValue(GetSessionToken()));
 
@@ -273,11 +288,11 @@ namespace UnigramPayment.Core
                 if (request.result == WebRequestUtils.SUCCESS)
                 {
                     var responseResult = request.downloadHandler.text;
-                    var receipt = JsonConvert.DeserializeObject<PaymentReceiptData>(responseResult);
+                    var receipt = JsonConvert.DeserializeObject<SuccessfulPaymentData>(responseResult);
 
                     paymentReceiptClaimed?.Invoke(receipt);
 
-                    UnigramPaymentLogger.Log($"Customer transaction data {receipt} has been successfully uploaded.");
+                    UnigramPaymentLogger.Log($"Customer transaction data {responseResult} has been successfully uploaded.");
 
                     yield break;
                 }
