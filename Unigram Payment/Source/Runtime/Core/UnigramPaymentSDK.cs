@@ -204,7 +204,12 @@ namespace UnigramPayment.Runtime.Core
 
                 if (status == PaymentStatus.paid)
                 {
-                    GetPaymentReceipt(itemId, (receipt) =>
+                    UnigramPaymentLogger.Log($"Local purchase event " +
+                        $"finished with status: {status}, start load payment receipt");
+
+                    var userId = WebAppAPIBridge.GetTelegramUser().Id.ToString();
+
+                    GetPaymentReceipt(userId, itemId, (receipt) =>
                     {
                         if (receipt == null)
                         {
@@ -364,10 +369,13 @@ namespace UnigramPayment.Runtime.Core
             });
         }
 
-        private void GetPaymentReceipt(string itemId, 
+        private void GetPaymentReceipt(string userId, string itemId, 
             Action<SuccessfulPaymentData> paymentReceiptDataClaimed)
         {
-            StartCoroutine(BotAPIBridge.GetPaymentReceipt(itemId, (receipt) =>
+            UnigramPaymentLogger.Log("Start load receipts");
+
+            StartCoroutine(BotAPIBridge.GetPaymentReceipt(
+                userId, itemId, (receipt) =>
             {
                 _lastPaymentReceipt = receipt;
 

@@ -254,7 +254,7 @@ namespace UnigramPayment.Core
             }
         }
 
-        internal static IEnumerator GetPaymentReceipt(string itemId,
+        internal static IEnumerator GetPaymentReceipt(string userId, string itemId,
             Action<SuccessfulPaymentData> paymentReceiptClaimed)
         {
             if (!IsExistServerLink())
@@ -266,7 +266,7 @@ namespace UnigramPayment.Core
 
             var invoiceData = new BuyerInvoiceData()
             {
-                TelegramId = $"{WebAppAPIBridge.GetTelegramUser().Id}",
+                TelegramId = userId,
                 PurchasedItemId = itemId,
             };
 
@@ -274,13 +274,14 @@ namespace UnigramPayment.Core
 
             UnigramPaymentLogger.Log($"Product data for confirm purchase: {jsonPayload}");
 
-            using (UnityWebRequest request = new(url, UnityWebRequest.kHttpVerbGET))
+            using (UnityWebRequest request = new(url, UnityWebRequest.kHttpVerbPOST))
             {
                 var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(jsonPayload);
 
                 WebRequestUtils.SetUploadHandler(request, WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
 
+                WebRequestUtils.SetRequestHeader(request, HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
                 WebRequestUtils.SetRequestHeader(request, HEADER_AUTHORIZATION,
                     WebRequestUtils.GetAuthorizationHeaderValue(GetSessionToken()));
 
@@ -291,9 +292,9 @@ namespace UnigramPayment.Core
                     var responseResult = request.downloadHandler.text;
                     var receipt = JsonConvert.DeserializeObject<SuccessfulPaymentData>(responseResult);
 
-                    paymentReceiptClaimed?.Invoke(receipt);
-
                     UnigramPaymentLogger.Log($"Customer transaction data {responseResult} has been successfully uploaded.");
+
+                    paymentReceiptClaimed?.Invoke(receipt);
 
                     yield break;
                 }

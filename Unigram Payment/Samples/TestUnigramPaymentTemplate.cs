@@ -4,6 +4,8 @@ using TMPro;
 using Newtonsoft.Json;
 using UnigramPayment.Runtime.Core;
 using UnigramPayment.Runtime.Data;
+using UnigramPayment.Core;
+using UnigramPayment.Runtime.Utils;
 
 namespace TestExample
 {
@@ -34,9 +36,6 @@ namespace TestExample
             _unigramPayment.OnItemPurchaseFailed += TargetItemPurchaseFailed;
 
             _unigramPayment.OnRefundTransactionFinished += RefundTransactionFinished;
-
-            _unigramPayment.OnPurchaseHistoryLoaded += OnPurchaseHistoryLoaded;
-            _unigramPayment.OnRefundHistoryLoaded += OnRefundHistoryLoaded;
         }
 
         private void OnDisable()
@@ -53,9 +52,6 @@ namespace TestExample
             _unigramPayment.OnItemPurchaseFailed -= TargetItemPurchaseFailed;
 
             _unigramPayment.OnRefundTransactionFinished -= RefundTransactionFinished;
-
-            _unigramPayment.OnPurchaseHistoryLoaded -= OnPurchaseHistoryLoaded;
-            _unigramPayment.OnRefundHistoryLoaded -= OnRefundHistoryLoaded;
         }
 
         private void Start()
@@ -98,7 +94,11 @@ namespace TestExample
         {
             if (isSuccess)
             {
-                _randomItemForPurchase = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
+#if !UNITY_EDITOR && UNITY_WEBGL
+                Debug.Log($"Loaded telegram user data: ${JsonConvert.SerializeObject(WebAppAPIBridge.GetTelegramUser())}");
+#endif
+
+                _randomItemForPurchase = _itemsStorage.Items[UnityEngine.Random.Range(0, _itemsStorage.Items.Count - 1)];
 
                 Debug.Log($"Claimed item with payload id: {_randomItemForPurchase.Id}");
 
@@ -131,9 +131,6 @@ namespace TestExample
                 $" test item {itemPayloadId} has been successfully generated: {url}";
 
             SetInteractableStateByButton(_purchaseItemButton, true);
-
-            _unigramPayment.GetPurchaseHistory(15);
-            _unigramPayment.GetRefundHistory(20);
         }
 
         private void PaymentInvoiceCreateFailed(string itemPayloadId)
@@ -177,16 +174,6 @@ namespace TestExample
 
             _debugBar.text = $"{DEBUG_PREFIX} Couldn't get a refund for the stars I bought" +
                 " for one reason, they may have already been refunded.";
-        }
-
-        private void OnPurchaseHistoryLoaded(PurchaseHistoryData history)
-        {
-            Debug.Log($"Claimed purchase history: {JsonConvert.SerializeObject(history)}");
-        }
-
-        private void OnRefundHistoryLoaded(RefundHistoryData history)
-        {
-            Debug.Log($"Claimed refund history: {JsonConvert.SerializeObject(history)}");
         }
     }
 }

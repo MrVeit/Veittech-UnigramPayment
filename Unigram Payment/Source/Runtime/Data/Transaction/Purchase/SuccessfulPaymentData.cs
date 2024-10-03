@@ -16,6 +16,6 @@ namespace UnigramPayment.Runtime.Data
         public string PayloadItem { get; set; }
 
         [JsonProperty("price")]
-        public long Price { get; set; }
+        public string Price { get; set; }
     }
 }
