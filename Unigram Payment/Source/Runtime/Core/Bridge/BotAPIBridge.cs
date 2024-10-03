@@ -108,6 +108,7 @@ namespace UnigramPayment.Core
                 if (request.result == WebRequestUtils.SUCCESS)
                 {
                     var responseResult = request.downloadHandler.text;
+
                     var authToken = JsonConvert.DeserializeObject<AuthorizationTokenData>(responseResult);
 
                     authorizationTokenClaimed?.Invoke(authToken.Token);
@@ -265,7 +266,7 @@ namespace UnigramPayment.Core
 
             var invoiceData = new BuyerInvoiceData()
             {
-                TelegramId = WebAppAPIBridge.GetTelegramUser().Id,
+                TelegramId = $"{WebAppAPIBridge.GetTelegramUser().Id}",
                 PurchasedItemId = itemId,
             };
 

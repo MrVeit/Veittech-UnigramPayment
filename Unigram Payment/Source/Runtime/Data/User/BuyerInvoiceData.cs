@@ -7,7 +7,7 @@ namespace UnigramPayment.Runtime.Data
     public sealed class BuyerInvoiceData
     {
         [JsonProperty("userId")]
-        public long TelegramId { get; set; }
+        public string TelegramId { get; set; }
 
         [JsonProperty("itemId")]
         public string PurchasedItemId { get; set; }

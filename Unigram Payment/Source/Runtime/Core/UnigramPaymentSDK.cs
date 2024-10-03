@@ -231,7 +231,7 @@ namespace UnigramPayment.Runtime.Core
         {
             LastRefundedTransaction = receipt.TransactionId;
 
-            StartCoroutine(BotAPIBridge.RefundPayment(receipt.BuyerId, 
+            StartCoroutine(BotAPIBridge.RefundPayment(long.Parse(receipt.BuyerId), 
                 receipt.TransactionId, (isSuccess) =>
             {
                 OnRefundTransactionFinish(LastRefundedTransaction, isSuccess);
@@ -319,7 +319,7 @@ namespace UnigramPayment.Runtime.Core
             {
                 JwtToken = authToken;
 
-                if (JwtToken == null)
+                if (string.IsNullOrEmpty(JwtToken))
                 {
                     accessTokenClaimFailed?.Invoke();
 

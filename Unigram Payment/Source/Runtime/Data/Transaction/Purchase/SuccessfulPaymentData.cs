@@ -10,7 +10,7 @@ namespace UnigramPayment.Runtime.Data
         public string TransactionId { get; set; }
 
         [JsonProperty("buyerId")]
-        public long BuyerId { get; set; }
+        public string BuyerId { get; set; }
 
         [JsonProperty("itemId")]
         public string PayloadItem { get; set; }
