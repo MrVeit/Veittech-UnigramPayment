@@ -10,7 +10,7 @@ const webAppLibrary = {
 
         getUnsafeInitData: function()
         {
-            if (!webApp.isTelegramWebApp())
+            if (!webApp.isTelegramApp())
             {
                 console.error("Failed to claim unsafe init data");
 
