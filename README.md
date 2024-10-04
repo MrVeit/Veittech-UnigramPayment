@@ -253,6 +253,7 @@ public sealed class UsageTemplate : MonoBehaviour
 
     private UnigramPaymentSDK _unigramPayment;
 
+    private SaleableItem _itemForPurchase;
     private PaymentReceiptData _itemPaymentReceipt;
 
     private string _latestInvoice;
@@ -291,16 +292,16 @@ public sealed class UsageTemplate : MonoBehaviour
 
     private void CreateInvoice()
     {
-        var randomItemFromStorage = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
+        _itemForPurchase = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
 
-        Debug.Log($"Claimed item with payload id: {randomItemFromStorage.Id}");
+        Debug.Log($"Claimed item with payload id: {_itemForPurchase.Id}");
 
-        _unigramPayment.CreateInvoice(randomItemFromStorage);
+        _unigramPayment.CreateInvoice(_itemForPurchase);
     }
         
     private void OpenInvoice()
     {
-        _unigramPayment.OpenInvoice(_latestInvoice);
+        _unigramPayment.OpenInvoice(_latestInvoice, _itemForPurchase.Id);
     }
 
     private void UnigramPaymentInitialized(bool isSuccess)
@@ -355,6 +356,7 @@ public sealed class UsageTemplate : MonoBehaviour
 
     private UnigramPaymentSDK _unigramPayment;
 
+    private SaleableItem _itemForPurchase;
     private PaymentReceiptData _itemPaymentReceipt;
 
     private string _latestInvoice;
@@ -399,16 +401,16 @@ public sealed class UsageTemplate : MonoBehaviour
 
     private void CreateInvoice()
     {
-        var randomItemFromStorage = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
+        _itemForPurchase = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
 
-        Debug.Log($"Claimed item with payload id: {randomItemFromStorage.Id}");
+        Debug.Log($"Claimed item with payload id: {_itemForPurchase.Id}");
 
-        _unigramPayment.CreateInvoice(randomItemFromStorage);
+        _unigramPayment.CreateInvoice(_itemForPurchase);
     }
         
     private void OpenInvoice()
     {
-        _unigramPayment.OpenInvoice(_latestInvoice);
+        _unigramPayment.OpenInvoice(_latestInvoice, _itemForPurchase.Id);
     }
 
     private void Refund()
