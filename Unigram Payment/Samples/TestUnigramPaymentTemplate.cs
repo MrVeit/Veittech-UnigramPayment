@@ -1,8 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Newtonsoft.Json;
 using UnigramPayment.Runtime.Core;
 using UnigramPayment.Runtime.Data;
+using UnigramPayment.Core;
+using UnigramPayment.Runtime.Utils;
 
 namespace TestExample
 {
@@ -10,13 +13,14 @@ namespace TestExample
     {
         [SerializeField, Space] private UnigramPaymentSDK _unigramPayment;
         [SerializeField, Space] private TextMeshProUGUI _debugBar;
-        [SerializeField, Space] private Button _createInvoiceButton;
+        [SerializeField, Space] private Button _purchaseItemButton;
         [SerializeField] private Button _refundStarsButton;
         [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
 
-        private string _latestInvoiceLink;
-
+        private SaleableItem _randomItemForPurchase;
         private PaymentReceiptData _itemPaymentReceipt;
+
+        private string _latestInvoiceLink;
 
         private const string DEBUG_PREFIX = "DEBUG INFO:";
 
@@ -36,6 +40,9 @@ namespace TestExample
 
         private void OnDisable()
         {
+            _purchaseItemButton.onClick.RemoveListener(PurchaseItem);
+            _refundStarsButton.onClick.RemoveListener(Refund);
+
             _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
 
             _unigramPayment.OnInvoiceLinkCreated -= PaymentInvoiceCreated;
@@ -45,9 +52,6 @@ namespace TestExample
             _unigramPayment.OnItemPurchaseFailed -= TargetItemPurchaseFailed;
 
             _unigramPayment.OnRefundTransactionFinished -= RefundTransactionFinished;
-
-            _createInvoiceButton.onClick.RemoveListener(PurchaseItem);
-            _refundStarsButton.onClick.RemoveListener(Refund);
         }
 
         private void Start()
@@ -59,7 +63,7 @@ namespace TestExample
         {
             ConfigureButtons();
 
-            SetInteractableStateByButton(_createInvoiceButton, false);
+            SetInteractableStateByButton(_purchaseItemButton, false);
             SetInteractableStateByButton(_refundStarsButton, false);
 
             _unigramPayment.Initialize();
@@ -67,7 +71,7 @@ namespace TestExample
 
         private void PurchaseItem()
         {
-            _unigramPayment.OpenInvoice(_latestInvoiceLink);
+            _unigramPayment.OpenInvoice(_randomItemForPurchase.Id, _latestInvoiceLink);
         }
 
         private void Refund()
@@ -77,7 +81,7 @@ namespace TestExample
 
         private void ConfigureButtons()
         {
-            _createInvoiceButton.onClick.AddListener(PurchaseItem);
+            _purchaseItemButton.onClick.AddListener(PurchaseItem);
             _refundStarsButton.onClick.AddListener(Refund);
         }
 
@@ -90,14 +94,18 @@ namespace TestExample
         {
             if (isSuccess)
             {
-                var randomItemFromStorage = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
+#if !UNITY_EDITOR && UNITY_WEBGL
+                Debug.Log($"Loaded telegram user data: ${JsonConvert.SerializeObject(WebAppAPIBridge.GetTelegramUser())}");
+#endif
 
-                Debug.Log($"Claimed item with payload id: {randomItemFromStorage.Id}");
+                _randomItemForPurchase = _itemsStorage.Items[UnityEngine.Random.Range(0, _itemsStorage.Items.Count - 1)];
 
-                _unigramPayment.CreateInvoice(randomItemFromStorage);
+                Debug.Log($"Claimed item with payload id: {_randomItemForPurchase.Id}");
+
+                _unigramPayment.CreateInvoice(_randomItemForPurchase);
 
                 _debugBar.text = $"{DEBUG_PREFIX} `Unigram Payment` has been successfully initialized." +
-                    $" The process of creating a payment link for an item with an id: {randomItemFromStorage.Id} has started.";
+                    $" The process of creating a payment link for an item with an id: {_randomItemForPurchase.Id} has started.";
 
                 return;
             }
@@ -111,7 +119,7 @@ namespace TestExample
             _debugBar.text = $"{DEBUG_PREFIX} The session token, to connect to the server API," +
                 $" has been successfully updated.: {_unigramPayment.JwtToken}";
 
-            SetInteractableStateByButton(_createInvoiceButton, true);
+            SetInteractableStateByButton(_purchaseItemButton, true);
             SetInteractableStateByButton(_refundStarsButton, false);
         }
 
@@ -122,7 +130,7 @@ namespace TestExample
             _debugBar.text = $"{DEBUG_PREFIX} The link to purchase the" +
                 $" test item {itemPayloadId} has been successfully generated: {url}";
 
-            SetInteractableStateByButton(_createInvoiceButton, true);
+            SetInteractableStateByButton(_purchaseItemButton, true);
         }
 
         private void PaymentInvoiceCreateFailed(string itemPayloadId)
@@ -140,7 +148,7 @@ namespace TestExample
                 $"was successfully purchased for {_itemPaymentReceipt.Amount} " +
                 $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}";
 
-            SetInteractableStateByButton(_createInvoiceButton, false);
+            SetInteractableStateByButton(_purchaseItemButton, false);
             SetInteractableStateByButton(_refundStarsButton, true);
         }
 
@@ -158,7 +166,7 @@ namespace TestExample
                 _debugBar.text = $"{DEBUG_PREFIX} The process of refunding the purchased stars through the transaction with" +
                     $" the identifier `{_unigramPayment.LastRefundedTransaction}` has been completed successfully";
 
-                SetInteractableStateByButton(_createInvoiceButton, true);
+                SetInteractableStateByButton(_purchaseItemButton, true);
                 SetInteractableStateByButton(_refundStarsButton, false);
 
                 return;

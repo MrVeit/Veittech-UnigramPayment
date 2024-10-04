@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: Items Storage
   m_EditorClassIdentifier: 
   <Items>k__BackingField:
-  - {fileID: 11400000, guid: 1b1bafd7c4ca3214184b8a62c227705d, type: 2}
   - {fileID: 11400000, guid: e43d1a3b2f6f7394fa539a2dbcfd742d, type: 2}
+  - {fileID: 11400000, guid: 96cd528dc4f1e984393a619c7adb6b5f, type: 2}
+  - {fileID: 11400000, guid: 39928e713616b374289fa879d0edb8b6, type: 2}
   - {fileID: 11400000, guid: e894940d5844fa04d869c3ec74a71f0b, type: 2}
+  - {fileID: 11400000, guid: 20f4aac158dd48e4fa3c1edc0726b9f5, type: 2}
+  - {fileID: 11400000, guid: 1b1bafd7c4ca3214184b8a62c227705d, type: 2}
   - {fileID: 11400000, guid: 2a0e334c8d253cd448b4d193cf91f0b5, type: 2}

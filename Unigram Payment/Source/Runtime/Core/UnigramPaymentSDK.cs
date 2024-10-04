@@ -68,6 +68,7 @@ namespace UnigramPayment.Runtime.Core
         /// </summary>
         public string LastRefundedTransaction { get; private set; }
 
+        public bool IsInitialized { get; private set; }
         public bool IsDebugMode => _debugMode;
 
         /// <summary>
@@ -117,6 +118,16 @@ namespace UnigramPayment.Runtime.Core
         /// </summary>
         public event IUnigramPaymentTransactionCallbacks.OnRefundTransactionFinish OnRefundTransactionFinished;
 
+        /// <summary>
+        /// Returns current information on successful purchases
+        /// </summary>
+        public event IUnigramPaymentTransactionCallbacks.OnPurchaseHistoryLoad OnPurchaseHistoryLoaded;
+
+        /// <summary>
+        /// Returns current information on successful refunds 
+        /// </summary>
+        public event IUnigramPaymentTransactionCallbacks.OnRefundHistoryLoad OnRefundHistoryLoaded;
+
         private void Awake()
         {
             CreateInstance();
@@ -135,8 +146,10 @@ namespace UnigramPayment.Runtime.Core
         /// </summary>
         public void Initialize()
         {
-            AuthorizeClient((tokenClaimed) =>
+            AuthorizeClient(() =>
             {
+                IsInitialized = true;
+
                 OnInitialize(true);
             },
             () =>
@@ -156,7 +169,8 @@ namespace UnigramPayment.Runtime.Core
 
             if (saleableItem == null)
             {
-                UnigramPaymentLogger.LogError("The invoice link creation process is canceled, the item for purchase is not found in the vault.");
+                UnigramPaymentLogger.LogError("The invoice link creation process is canceled, " +
+                    "the item for purchase is not found in the vault.");
 
                 return;
             }
@@ -182,7 +196,7 @@ namespace UnigramPayment.Runtime.Core
         /// This call opens the invoice that was previously created when `CreateInvoice(SaleableItem item)` was called.
         /// </summary>
         /// <param name="invoiceUrl">Generated payment link</param>
-        public void OpenInvoice(string invoiceUrl)
+        public void OpenInvoice(string invoiceUrl, string itemId)
         {
             OpenPurchaseInvoice(invoiceUrl, (status, message) =>
             {
@@ -190,7 +204,12 @@ namespace UnigramPayment.Runtime.Core
 
                 if (status == PaymentStatus.paid)
                 {
-                    GetPaymentReceipt((receipt) =>
+                    UnigramPaymentLogger.Log($"Local purchase event " +
+                        $"finished with status: {status}, start load payment receipt");
+
+                    var userId = WebAppAPIBridge.GetTelegramUser().Id.ToString();
+
+                    GetPaymentReceipt(userId, itemId, (receipt) =>
                     {
                         if (receipt == null)
                         {
@@ -215,12 +234,10 @@ namespace UnigramPayment.Runtime.Core
         /// <param name="receipt">Link to check for payment of previously purchased telegram stars</param>
         public void Refund(PaymentReceiptData receipt)
         {
-            var parsedTelegramId = WebRequestUtils.ParseTelegramId(receipt.BuyerId);
-            var telegramId = int.Parse(parsedTelegramId);
-
             LastRefundedTransaction = receipt.TransactionId;
 
-            StartCoroutine(BotAPIBridge.RefundPayment(telegramId, receipt.TransactionId, (isSuccess) =>
+            StartCoroutine(BotAPIBridge.RefundPayment(long.Parse(receipt.BuyerId), 
+                receipt.TransactionId, (isSuccess) =>
             {
                 OnRefundTransactionFinish(LastRefundedTransaction, isSuccess);
 
@@ -236,7 +253,7 @@ namespace UnigramPayment.Runtime.Core
         {
             UnigramPaymentLogger.Log("A request to update the server access token has been activated.");
 
-            AuthorizeClient((tokenClaimed) =>
+            AuthorizeClient(() =>
             {
                 OnSessionTokenRefresh();
             },
@@ -246,14 +263,68 @@ namespace UnigramPayment.Runtime.Core
             });
         }
 
-        private void AuthorizeClient(Action<string> accessTokenClaimed,
+        /// <summary>
+        /// Returns the specified number of successful transactions.
+        /// </summary>
+        /// <param name="amount">The number of transactions to download, displayed up to 100 if no value is specified.
+        /// IMPORTANT: Telegram bot api starts counting from the first transaction recorded by the bot, not from the most recent one.</param>
+        /// <param name="totalPass">The number of skips between transactions.
+        /// Useful parameter to get closer to the most recent transactions from the list (thanks to the great Telegram Bot API for such a crutch)</param>
+        public void GetPurchaseHistory(int amount = 0,
+            int totalPass = 0)
+        {
+            StartCoroutine(BotAPIBridge.GetPurchaseHistory(
+                amount, totalPass, (history) =>
+            {
+                if (history == null || history.Transactions.Count == 0)
+                {
+                    UnigramPaymentLogger.LogWarning("Failed to download the history of successful payments");
+
+                    return;
+                }
+
+                UnigramPaymentLogger.Log($"Purchase history successfully " +
+                    $"claimed with transactions amount: {history.Transactions.Count}");
+
+                OnPurchaseHistoryLoad(history);
+            }));
+        }
+
+        /// <summary>
+        /// Returns the specified number of successful refunds.
+        /// </summary>
+        /// <param name="amount">The number of transactions to download, displayed up to 100 if no value is specified.
+        /// IMPORTANT: Telegram bot api starts counting from the first transaction recorded by the bot, not from the most recent one.</param>
+        /// <param name="totalPass">The number of skips between transactions.
+        /// Useful parameter to get closer to the most recent transactions from the list (thanks to the great Telegram Bot API for such a crutch)</param>
+        public void GetRefundHistory(int amount = 0,
+            int totalPass = 0)
+        {
+            StartCoroutine(BotAPIBridge.GetRefundHistory(
+                amount, totalPass, (history) =>
+            {
+                if (history == null || history.Transactions.Count == 0)
+                {
+                    UnigramPaymentLogger.LogWarning("Failed to download the history of successful refuns");
+
+                    return;
+                }
+
+                UnigramPaymentLogger.Log($"Refund history successfully " +
+                        $"claimed with transactions amount: {history.Transactions.Count}");
+
+                OnRefundHistoryLoad(history);
+            }));
+        }
+
+        private void AuthorizeClient(Action accessTokenClaimed,
             Action accessTokenClaimFailed)
         {
             StartCoroutine(BotAPIBridge.AuthorizeClient((authToken) =>
             {
                 JwtToken = authToken;
 
-                if (JwtToken == null)
+                if (string.IsNullOrEmpty(JwtToken))
                 {
                     accessTokenClaimFailed?.Invoke();
 
@@ -262,21 +333,23 @@ namespace UnigramPayment.Runtime.Core
 
                 UnigramPaymentLogger.Log($"Loaded jwt token: {JwtToken}");
 
-                accessTokenClaimed?.Invoke(JwtToken);
+                accessTokenClaimed?.Invoke();
 
-                UnigramPaymentLogger.Log("Unigram Payment SDK has been successfully initialized, connection to the server has been made.");
+                UnigramPaymentLogger.Log("Unigram Payment SDK has been successfully " +
+                    "initialized, connection to the server has been made.");
             }));
         }
 
-
-        private void OpenPurchaseInvoice(string invoiceLink, Action<PaymentStatus, string> invoiceClosed)
+        private void OpenPurchaseInvoice(string invoiceLink,
+            Action<PaymentStatus, string> invoiceClosed)
         {
             if (!UnigramUtils.IsSupportedNativeOpen())
             {
                 Application.OpenURL(invoiceLink);
 
-                UnigramPaymentLogger.LogWarning("Native opening of payment request in Telegram Stars is not supported in Editor." +
-                    " Make a WebGL build to get the result of native transaction status events.");
+                UnigramPaymentLogger.LogWarning("Native opening of payment request in " +
+                    "Telegram Stars is not supported in Editor. Make a WebGL build to " +
+                    "get the result of native transaction status events.");
 
                 return;
             }
@@ -296,9 +369,13 @@ namespace UnigramPayment.Runtime.Core
             });
         }
 
-        private void GetPaymentReceipt(Action<PaymentReceiptData> paymentReceiptDataClaimed)
+        private void GetPaymentReceipt(string userId, string itemId, 
+            Action<PaymentReceiptData> paymentReceiptDataClaimed)
         {
-            StartCoroutine(BotAPIBridge.GetPaymentReceipt((receipt) =>
+            UnigramPaymentLogger.Log("Start load receipts");
+
+            StartCoroutine(BotAPIBridge.GetPaymentReceipt(
+                userId, itemId, (receipt) =>
             {
                 _lastPaymentReceipt = receipt;
 
@@ -342,5 +419,9 @@ namespace UnigramPayment.Runtime.Core
 
         private void OnRefundTransactionFinish(string transactionId,
             bool isSuccess) => OnRefundTransactionFinished?.Invoke(transactionId, isSuccess);
+
+        private void OnPurchaseHistoryLoad(PurchaseHistoryData history) => OnPurchaseHistoryLoaded?.Invoke(history);
+
+        private void OnRefundHistoryLoad(RefundHistoryData history) => OnRefundHistoryLoaded?.Invoke(history);
     }
 }

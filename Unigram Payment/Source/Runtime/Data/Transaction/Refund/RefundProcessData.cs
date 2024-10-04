@@ -7,7 +7,7 @@ namespace UnigramPayment.Runtime.Data
     public sealed class RefundProcessData
     {
         [JsonProperty("userId")]
-        public int UserId { get; set; }
+        public long UserId { get; set; }
 
         [JsonProperty("transactionId")]
         public string TransactionId { get; set; }

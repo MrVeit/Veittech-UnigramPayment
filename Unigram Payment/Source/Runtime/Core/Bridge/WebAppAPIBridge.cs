@@ -1,7 +1,8 @@
 using System;
-using UnityEngine;
 using System.Runtime.InteropServices;
 using AOT;
+using Newtonsoft.Json;
+using UnigramPayment.Runtime.Data;
 using UnigramPayment.Runtime.Utils.Debugging;
 
 namespace UnigramPayment.Core
@@ -38,6 +39,9 @@ namespace UnigramPayment.Core
         [DllImport("__Internal")]
         private static extern void OpenInvoice(string invoiceUrl, 
             Action<string, string> invoiceSuccessfullyPaid, Action<string> invoicePayFailed);
+
+        [DllImport("__Internal")]
+        private static extern string GetUnsafeInitData();
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void OnInvoiceSuccessfullyPaid(string status, string paymentReceipt)
@@ -130,6 +134,24 @@ namespace UnigramPayment.Core
         public static void OpenTelegramDeepLink(string url)
         {
             OpenTelegramLink(url);
+        }
+
+        /// <summary>
+        /// Loads a basic dataset from telegram init data
+        /// </summary>
+        public static StartTelegramUserData GetTelegramUser()
+        {
+            var data = JsonConvert.DeserializeObject<
+                StartTelegramUserData>(GetUnsafeInitData());
+
+            if (data == null)
+            {
+                UnigramPaymentLogger.LogError("Failed to parse telegram user data, something wrong");
+
+                return null;
+            }
+
+            return data;
         }
 
         internal static void OpenPurchaseInvoice(string url, 
