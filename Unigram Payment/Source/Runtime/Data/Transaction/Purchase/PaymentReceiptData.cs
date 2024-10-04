@@ -4,19 +4,16 @@ namespace UnigramPayment.Runtime.Data
 {
     public sealed class PaymentReceiptData
     {
-        [JsonProperty("currency")]
-        public string CurrencyType { get; set; }
-
-        [JsonProperty("total_amount")]
-        public int Amount { get; set; }
-
-        [JsonProperty("invoice_payload")]
-        public string InvoicePayload { get; set; }
-
-        [JsonProperty("telegram_payment_charge_id")]
+        [JsonProperty("id")]
         public string TransactionId { get; set; }
 
-        [JsonProperty("provider_payment_charge_id")]
+        [JsonProperty("buyerId")]
         public string BuyerId { get; set; }
+
+        [JsonProperty("itemId")]
+        public string InvoicePayload { get; set; }
+
+        [JsonProperty("price")]
+        public string Amount { get; set; }
     }
 }

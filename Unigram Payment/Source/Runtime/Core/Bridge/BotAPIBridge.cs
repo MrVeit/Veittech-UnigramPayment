@@ -8,7 +8,6 @@ using UnigramPayment.Runtime.Common;
 using UnigramPayment.Runtime.Utils;
 using UnigramPayment.Runtime.Utils.Debugging;
 using UnigramPayment.Storage.Data;
-using System.Diagnostics;
 
 namespace UnigramPayment.Core
 {
@@ -255,7 +254,7 @@ namespace UnigramPayment.Core
         }
 
         internal static IEnumerator GetPaymentReceipt(string userId, string itemId,
-            Action<SuccessfulPaymentData> paymentReceiptClaimed)
+            Action<PaymentReceiptData> paymentReceiptClaimed)
         {
             if (!IsExistServerLink())
             {
@@ -290,7 +289,7 @@ namespace UnigramPayment.Core
                 if (request.result == WebRequestUtils.SUCCESS)
                 {
                     var responseResult = request.downloadHandler.text;
-                    var receipt = JsonConvert.DeserializeObject<SuccessfulPaymentData>(responseResult);
+                    var receipt = JsonConvert.DeserializeObject<PaymentReceiptData>(responseResult);
 
                     UnigramPaymentLogger.Log($"Customer transaction data {responseResult} has been successfully uploaded.");
 

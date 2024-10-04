@@ -7,7 +7,7 @@ namespace UnigramPayment.Core.Common
         delegate void OnInvoiceLinkCreate(string itemPayloadId, string url);
         delegate void OnInvoiceLinkCreateFail(string itemPayloadId);
 
-        delegate void OnItemPurchase(SuccessfulPaymentData receipt);
+        delegate void OnItemPurchase(PaymentReceiptData receipt);
         delegate void OnItemPurchaseFail(SaleableItem failedPurchaseItem);
 
         delegate void OnRefundTransactionFinish(string transactionId, bool isSuccess);

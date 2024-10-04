@@ -51,7 +51,7 @@ namespace UnigramPayment.Runtime.Core
 
         private SaleableItem _currentPurchaseItem;
 
-        private SuccessfulPaymentData _lastPaymentReceipt;
+        private PaymentReceiptData _lastPaymentReceipt;
 
         /// <summary>
         /// Access token to the API server to work with the payment module.
@@ -196,7 +196,7 @@ namespace UnigramPayment.Runtime.Core
         /// This call opens the invoice that was previously created when `CreateInvoice(SaleableItem item)` was called.
         /// </summary>
         /// <param name="invoiceUrl">Generated payment link</param>
-        public void OpenInvoice(string itemId, string invoiceUrl)
+        public void OpenInvoice(string invoiceUrl, string itemId)
         {
             OpenPurchaseInvoice(invoiceUrl, (status, message) =>
             {
@@ -232,7 +232,7 @@ namespace UnigramPayment.Runtime.Core
         /// Starting the process of returning previously purchased stars
         /// </summary>
         /// <param name="receipt">Link to check for payment of previously purchased telegram stars</param>
-        public void Refund(SuccessfulPaymentData receipt)
+        public void Refund(PaymentReceiptData receipt)
         {
             LastRefundedTransaction = receipt.TransactionId;
 
@@ -370,7 +370,7 @@ namespace UnigramPayment.Runtime.Core
         }
 
         private void GetPaymentReceipt(string userId, string itemId, 
-            Action<SuccessfulPaymentData> paymentReceiptDataClaimed)
+            Action<PaymentReceiptData> paymentReceiptDataClaimed)
         {
             UnigramPaymentLogger.Log("Start load receipts");
 
@@ -381,7 +381,7 @@ namespace UnigramPayment.Runtime.Core
 
                 paymentReceiptDataClaimed?.Invoke(_lastPaymentReceipt);
 
-                UnigramPaymentLogger.Log($"Received data about the transaction {receipt.TransactionId} made with the identifier {receipt.PayloadItem}");
+                UnigramPaymentLogger.Log($"Received data about the transaction {receipt.TransactionId} made with the identifier {receipt.InvoicePayload}");
             }));
         }
 
@@ -413,7 +413,7 @@ namespace UnigramPayment.Runtime.Core
             string invoiceUrl) => OnInvoiceLinkCreated?.Invoke(itemId, invoiceUrl);
         private void OnInvoiceLinkCreateFail(string itemId) => OnInvoiceLinkCreateFailed?.Invoke(itemId);
 
-        private void OnItemPurchase(SuccessfulPaymentData receipt) => OnItemPurchased?.Invoke(receipt);
+        private void OnItemPurchase(PaymentReceiptData receipt) => OnItemPurchased?.Invoke(receipt);
         private void OnItemPurchaseFail(SaleableItem failedPurchaseItem) =>
             OnItemPurchaseFailed?.Invoke(failedPurchaseItem);
 

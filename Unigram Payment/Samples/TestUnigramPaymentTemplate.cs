@@ -18,7 +18,7 @@ namespace TestExample
         [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
 
         private SaleableItem _randomItemForPurchase;
-        private SuccessfulPaymentData _itemPaymentReceipt;
+        private PaymentReceiptData _itemPaymentReceipt;
 
         private string _latestInvoiceLink;
 
@@ -140,12 +140,12 @@ namespace TestExample
                  $" SDK is not initialized, API server is not started, incorrectly filled in product data.";
         }
 
-        private void TargetItemPurchased(SuccessfulPaymentData receipt)
+        private void TargetItemPurchased(PaymentReceiptData receipt)
         {
             _itemPaymentReceipt = receipt;
 
-            _debugBar.text = $"{DEBUG_PREFIX} The item with identifier {_itemPaymentReceipt.PayloadItem} " +
-                $"was successfully purchased for {_itemPaymentReceipt.Price} " +
+            _debugBar.text = $"{DEBUG_PREFIX} The item with identifier {_itemPaymentReceipt.InvoicePayload} " +
+                $"was successfully purchased for {_itemPaymentReceipt.Amount} " +
                 $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}";
 
             SetInteractableStateByButton(_purchaseItemButton, false);
