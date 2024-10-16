@@ -73,9 +73,9 @@ namespace TestExample
 
         private void PurchaseItem()
         {
-            _unigramPayment.OpenInvoice(_latestInvoiceLink, _randomItemForPurchase.Id);
-
             _pendingTransactionPopUp.Show();
+
+            _unigramPayment.OpenInvoice(_latestInvoiceLink, _randomItemForPurchase.Id);
         }
 
         private void Refund()

@@ -16,7 +16,7 @@ namespace TestExample.UI.PopUp
 
         public virtual void Hide()
         {
-            gameObject.SetActive(true);
+            gameObject.SetActive(false);
         }
     }
 }

@@ -236,6 +236,8 @@ namespace UnigramPayment.Runtime.Core
                 else if (status is PaymentStatus.cancelled or PaymentStatus.failed)
                 {
                     OnItemPurchaseFail(_currentPurchaseItem);
+
+                    UnigramPaymentLogger.LogWarning($"Purchase item {_currentPurchaseItem.Name} failed");
                 }
             });
         }
@@ -357,7 +359,7 @@ namespace UnigramPayment.Runtime.Core
         {
             if (!UnigramUtils.IsSupportedNativeOpen())
             {
-                Application.OpenURL(invoiceLink);
+                invoiceClosed?.Invoke(PaymentStatus.cancelled, null);
 
                 UnigramPaymentLogger.LogWarning("Native opening of payment request in " +
                     "Telegram Stars is not supported in Editor. Make a WebGL build to " +
