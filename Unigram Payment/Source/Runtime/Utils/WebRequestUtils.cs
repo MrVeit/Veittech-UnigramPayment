@@ -21,6 +21,7 @@ namespace UnigramPayment.Runtime.Utils
         public const string HEADER_VALUE_TEXT_PLAIN = "text/plain";
 
         public const string ERROR_JWT_SESSION_EXPIRED = "Unauthorized client, access denied.";
+        public const string ERROR_TRANSACTION_RECEIPT_NOT_FOUND = "Target transaction not found";
 
         public static void SetRequestHeader(UnityWebRequest webRequest,
             string header, string headerValue)

@@ -8,6 +8,7 @@ using UnigramPayment.Runtime.Common;
 using UnigramPayment.Runtime.Utils;
 using UnigramPayment.Runtime.Utils.Debugging;
 using UnigramPayment.Storage.Data;
+using UnityEngine;
 
 namespace UnigramPayment.Core
 {
@@ -253,13 +254,19 @@ namespace UnigramPayment.Core
             }
         }
 
-        internal static IEnumerator GetPaymentReceipt(string userId, string itemId,
-            Action<PaymentReceiptData> paymentReceiptClaimed)
+        internal static IEnumerator GetPaymentReceipt(float delay, string userId, string itemId,
+            Action<PaymentReceiptData> paymentReceiptClaimed, Action resendResponseIfNotExistTransaction)
         {
             if (!IsExistServerLink())
             {
                 yield break;
             }
+
+            UnigramPaymentLogger.Log($"Running a delay `{delay}s` to successfully receive a payment check from the Telegram API");
+
+            yield return new WaitForSeconds(delay);
+
+            UnigramPaymentLogger.Log($"Receipt validation sended for item {itemId} by user {userId}");
 
             var url = APIServerRequests.GetPaymentReceiptLink(API_SERVER_LINK);
 
@@ -300,9 +307,19 @@ namespace UnigramPayment.Core
                 else
                 {
                     var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
+
+                    var errorResponse = request.downloadHandler.text;
                     var code = request.responseCode;
 
+                    var errorData = JsonConvert.DeserializeObject<FailedResponseData>(errorResponse);
+
                     RefreshTokenIfSessionExpired(errorMessage);
+                    ResendFetchPurchaseReceiptIfNotFound(errorMessage, () =>
+                    {
+                        resendResponseIfNotExistTransaction?.Invoke();
+
+                        return;
+                    });
 
                     paymentReceiptClaimed?.Invoke(null);
 
@@ -383,6 +400,17 @@ namespace UnigramPayment.Core
 
                     yield break;
                 }
+            }
+        }
+
+        private static void ResendFetchPurchaseReceiptIfNotFound(
+            string errorMessage, Action resendResponseActivated)
+        {
+            if (errorMessage == WebRequestUtils.ERROR_TRANSACTION_RECEIPT_NOT_FOUND)
+            {
+                UnigramPaymentLogger.LogError("Target transaction not found, please resend response after delay.");
+
+                resendResponseActivated?.Invoke();
             }
         }
 

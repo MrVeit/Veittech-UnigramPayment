@@ -48,6 +48,11 @@ namespace UnigramPayment.Runtime.Core
         [SerializeField] private bool _initializeOnAwake;
         [Tooltip("Store all items for purchase, to add new ones call 'Create -> Unigram Payment -> Saleable Item' and add it to the list.")]
         [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
+        [Tooltip("Delay before sending a request to the backend to receive a check when making a payment." +
+            "Telegram API may not immediately send a request to the bot to trigger a successful payment and receive a check.")]
+        [SerializeField, Range(5.0f, 60.0f), Space] private float _receivePaymentCheckDelay;
+        [Tooltip("Number of retries to process the request. IMPORTANT: At the moment, it is used only for loading a payment check from the backend.")]
+        [SerializeField, Range(1, 10)] private int _resendAttempsAmount;
 
         private SaleableItem _currentPurchaseItem;
 
@@ -209,7 +214,7 @@ namespace UnigramPayment.Runtime.Core
 
                     var userId = WebAppAPIBridge.GetTelegramUser().Id.ToString();
 
-                    GetPaymentReceipt(userId, itemId, (receipt) =>
+                    GetPaymentReceipt(_receivePaymentCheckDelay, userId, itemId, (receipt) =>
                     {
                         if (receipt == null)
                         {
@@ -259,7 +264,7 @@ namespace UnigramPayment.Runtime.Core
             },
             () =>
             {
-                OnSessionTokenRefshFail();
+                OnSessionTokenRefreshFail();
             });
         }
 
@@ -369,12 +374,12 @@ namespace UnigramPayment.Runtime.Core
             });
         }
 
-        private void GetPaymentReceipt(string userId, string itemId, 
+        private void GetPaymentReceipt(float delay, string userId, string itemId, 
             Action<PaymentReceiptData> paymentReceiptDataClaimed)
         {
-            UnigramPaymentLogger.Log("Start load receipts");
+            UnigramPaymentLogger.Log($"Starting load purchase receipt for payload: {userId}");
 
-            StartCoroutine(BotAPIBridge.GetPaymentReceipt(
+            StartCoroutine(BotAPIBridge.GetPaymentReceipt(delay, 
                 userId, itemId, (receipt) =>
             {
                 _lastPaymentReceipt = receipt;
@@ -382,6 +387,25 @@ namespace UnigramPayment.Runtime.Core
                 paymentReceiptDataClaimed?.Invoke(_lastPaymentReceipt);
 
                 UnigramPaymentLogger.Log($"Received data about the transaction {receipt.TransactionId} made with the identifier {receipt.InvoicePayload}");
+            },
+            () =>
+            {
+                UnigramPaymentLogger.LogWarning($"Starting resend response for fetch payment receipt with attemp: {_resendAttempsAmount}");
+
+                _resendAttempsAmount++;
+
+                if (_resendAttempsAmount > 3)
+                {
+                    paymentReceiptDataClaimed?.Invoke(null);
+
+                    _resendAttempsAmount = 0;
+
+                    UnigramPaymentLogger.LogError($"Failed to receive a check for payment for some reason");
+
+                    return;
+                }
+
+                GetPaymentReceipt(delay, userId, itemId, paymentReceiptDataClaimed);
             }));
         }
 
@@ -407,7 +431,7 @@ namespace UnigramPayment.Runtime.Core
         private void OnInitialize(bool isSuccess) => OnInitialized?.Invoke(isSuccess);
 
         private void OnSessionTokenRefresh() => OnSessionTokenRefreshed?.Invoke();
-        private void OnSessionTokenRefshFail() => OnSessionTokenRefreshFailed?.Invoke();
+        private void OnSessionTokenRefreshFail() => OnSessionTokenRefreshFailed?.Invoke();
 
         private void OnInvoiceLinkCreate(string itemId,
             string invoiceUrl) => OnInvoiceLinkCreated?.Invoke(itemId, invoiceUrl);
