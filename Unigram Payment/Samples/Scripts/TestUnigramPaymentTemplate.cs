@@ -148,14 +148,14 @@ namespace TestExample
         {
             _itemPaymentReceipt = receipt;
 
+            _pendingTransactionPopUp.Hide();
+
             _debugBar.text = $"{DEBUG_PREFIX} The item with identifier {_itemPaymentReceipt.InvoicePayload} " +
                 $"was successfully purchased for {_itemPaymentReceipt.Amount} " +
                 $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}";
 
             SetInteractableStateByButton(_purchaseItemButton, false);
             SetInteractableStateByButton(_refundStarsButton, true);
-
-            _pendingTransactionPopUp.Hide();
         }
 
         private void TargetItemPurchaseFailed(SaleableItem failedPurchaseItem)

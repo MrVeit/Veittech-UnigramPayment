@@ -1125,7 +1125,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5202191579620558129, guid: ca8c6034c648a23408b744d0eedf88cb, type: 3}
       propertyPath: _resendAttempsAmount
-      value: 1
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5202191579620558129, guid: ca8c6034c648a23408b744d0eedf88cb, type: 3}
+      propertyPath: _receivePaymentCheckDelay
+      value: 5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1630,7 +1634,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.0009765625, y: -0.0025634766}
+  m_AnchoredPosition: {x: 0.0009765625, y: -0.0024414062}
   m_SizeDelta: {x: 0.3300171, y: -0.8000488}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1750891790

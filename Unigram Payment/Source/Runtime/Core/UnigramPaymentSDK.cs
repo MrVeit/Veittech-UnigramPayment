@@ -203,6 +203,13 @@ namespace UnigramPayment.Runtime.Core
         /// <param name="invoiceUrl">Generated payment link</param>
         public void OpenInvoice(string invoiceUrl, string itemId)
         {
+            if (_receivePaymentCheckDelay <= 0)
+            {
+                UnigramPaymentLogger.LogWarning($"The transaction delay is 0, please set it and try again.");
+
+                return;
+            }
+
             OpenPurchaseInvoice(invoiceUrl, (status, message) =>
             {
                 UnigramPaymentLogger.Log($"Transaction finished with status: {status}, data: {message}");
@@ -377,7 +384,7 @@ namespace UnigramPayment.Runtime.Core
         private void GetPaymentReceipt(float delay, string userId, string itemId, 
             Action<PaymentReceiptData> paymentReceiptDataClaimed)
         {
-            UnigramPaymentLogger.Log($"Starting load purchase receipt for payload: {userId}");
+            UnigramPaymentLogger.Log($"Starting load purchase receipt for payload: {userId} with delay: {delay}");
 
             StartCoroutine(BotAPIBridge.GetPaymentReceipt(delay, 
                 userId, itemId, (receipt) =>
