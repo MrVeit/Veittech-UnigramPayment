@@ -2,10 +2,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Newtonsoft.Json;
+using UnigramPayment.Core;
 using UnigramPayment.Runtime.Core;
 using UnigramPayment.Runtime.Data;
-using UnigramPayment.Core;
 using UnigramPayment.Runtime.Utils;
+using TestExample.UI.PopUp;
 
 namespace TestExample
 {
@@ -16,6 +17,7 @@ namespace TestExample
         [SerializeField, Space] private Button _purchaseItemButton;
         [SerializeField] private Button _refundStarsButton;
         [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
+        [SerializeField, Space] private TestTransactionPendingPopUp _pendingTransactionPopUp;
 
         private SaleableItem _randomItemForPurchase;
         private PaymentReceiptData _itemPaymentReceipt;
@@ -72,6 +74,8 @@ namespace TestExample
         private void PurchaseItem()
         {
             _unigramPayment.OpenInvoice(_latestInvoiceLink, _randomItemForPurchase.Id);
+
+            _pendingTransactionPopUp.Show();
         }
 
         private void Refund()
@@ -98,7 +102,7 @@ namespace TestExample
                 Debug.Log($"Loaded telegram user data: ${JsonConvert.SerializeObject(WebAppAPIBridge.GetTelegramUser())}");
 #endif
 
-                _randomItemForPurchase = _itemsStorage.Items[UnityEngine.Random.Range(0, _itemsStorage.Items.Count - 1)];
+                _randomItemForPurchase = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
 
                 Debug.Log($"Claimed item with payload id: {_randomItemForPurchase.Id}");
 
@@ -150,10 +154,14 @@ namespace TestExample
 
             SetInteractableStateByButton(_purchaseItemButton, false);
             SetInteractableStateByButton(_refundStarsButton, true);
+
+            _pendingTransactionPopUp.Hide();
         }
 
         private void TargetItemPurchaseFailed(SaleableItem failedPurchaseItem)
         {
+            _pendingTransactionPopUp.Hide();
+
             _debugBar.text = $"{DEBUG_PREFIX} Failed to purchase an item {failedPurchaseItem.Name}" +
                 $" for one of the following reasons: SDK not initialized," +
                 $" API server not configured, or incorrect item data entered.";
