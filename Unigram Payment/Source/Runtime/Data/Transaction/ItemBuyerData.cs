@@ -3,7 +3,6 @@ using Newtonsoft.Json;
 
 namespace UnigramPayment.Runtime.Data
 {
-    [Serializable]
     public sealed class ItemBuyerData
     {
         [JsonProperty("type")]

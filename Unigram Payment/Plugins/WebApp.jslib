@@ -3,6 +3,26 @@ const webAppLibrary = {
     // Class definition
 
     $webApp: {
+        getAllocString: function(data)
+        {
+            let ptr;
+
+            if (typeof allocate === 'undefined')
+            {
+                console.log(`Detected Unity version 2023+`);
+
+                const length = lengthBytesUTF8(data) + 1;
+
+                ptr = _malloc(length);
+
+                stringToUTF8(data, ptr, length);
+
+                return ptr;
+            }
+
+            return allocate(intArrayFromString(data), 'i8', ALLOC_NORMAL);
+        },
+
         isTelegramApp: function()
         {
             return typeof Telegram !== 'undefined' && Telegram.WebApp !== null;
@@ -14,7 +34,7 @@ const webAppLibrary = {
             {
                 console.error("Failed to claim unsafe init data");
 
-                return allocate(intArrayFromString(""), ALLOC_NORMAL);
+                return webApp.getAllocString("");
             }
 
             var initDataUnsafe = Telegram.WebApp.initDataUnsafe;
@@ -23,14 +43,14 @@ const webAppLibrary = {
             {
                 console.error("Failed to claim unsafe init data, because is null");
 
-                return allocate(intArrayFromString(""), ALLOC_NORMAL);
+                return webApp.getAllocString("");
             }
 
             if (initDataUnsafe.user == null)
             {
                 console.error("Failed to parse user data in unsafe init data");
 
-                return allocate(intArrayFromString(""), ALLOC_NORMAL);
+                return webApp.getAllocString("");
             }
             
             console.log(JSON.stringify(initDataUnsafe));
@@ -41,17 +61,14 @@ const webAppLibrary = {
                 first_name: initDataUnsafe.user.first_name || null,
                 last_name: initDataUnsafe.user.last_name || null,
                 username: initDataUnsafe.user.username || null,
-                language_code: initDataUnsafe.user.language_code || null,
                 start_param: initDataUnsafe.start_param || null,
-                auth_date: initDataUnsafe.auth_date || null,
-                hash: initDataUnsafe.hash || null
             };
 
             var jsonString = JSON.stringify(filteredData);
 
             console.log(`Successfully claimed unsafe init data: ${jsonString}`);
 
-            return allocate(intArrayFromString(jsonString), ALLOC_NORMAL);
+            return webApp.getAllocString(jsonString);
         },
 
         isVersionAtLeast: function(version)
@@ -78,7 +95,7 @@ const webAppLibrary = {
         {
             if (!webApp.isTelegramApp())
             {
-                return "";
+                return webApp.getAllocString("");;
             }
 
             return Telegram.WebApp.version;
@@ -144,7 +161,7 @@ const webAppLibrary = {
                     if (event.status === "paid")
                     {
                         var paymentJson = JSON.stringify(event);
-                        var paymentPtr = allocate(intArrayFromString(paymentJson), ALLOC_NORMAL);
+                        var paymentPtr = webApp.getAllocString(paymentJson);
 
                         dynCall('vii', successCallbackPtr, [statusPtr, paymentPtr]);
 

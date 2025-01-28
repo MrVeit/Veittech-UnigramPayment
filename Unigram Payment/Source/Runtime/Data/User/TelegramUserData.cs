@@ -1,9 +1,7 @@
-using System;
 using Newtonsoft.Json;
 
 namespace UnigramPayment.Runtime.Data
 {
-    [Serializable]
     public sealed class TelegramUserData
     {
         [JsonProperty("id")]
@@ -13,16 +11,16 @@ namespace UnigramPayment.Runtime.Data
         public bool IsBot { get; set; }
 
         [JsonProperty("is_premium")]
-        public bool IsHavePremium { get; set; }
+        public bool? IsHavePremium { get; set; }
 
         [JsonProperty("first_name")]
         public string FirstName { get; set; }
 
         [JsonProperty("last_name")]
-        public string LastName { get; set; }
+        public string? LastName { get; set; }
 
         [JsonProperty("username")]
-        public string Username { get; set; }
+        public string? Username { get; set; }
 
         [JsonProperty("language_code")]
         public string LanguageCode { get; set; }

@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7a742dac411901e4cab9953e74bb1a7b, type: 3}
-  m_Name: TestProduct_MintlessJettons
+  m_Name: TestProduct_GovnoNeTonYet
   m_EditorClassIdentifier: 
-  <Id>k__BackingField: product_mintless_jettons
-  <Name>k__BackingField: Mintless Jettons
+  <Id>k__BackingField: product_govno-ne-tonyet
+  <Name>k__BackingField: Govno ne tonyet?
   <Description>k__BackingField: A very important text that no one reads
-  <Price>k__BackingField: 30
+  <Price>k__BackingField: 75
