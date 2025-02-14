@@ -2,22 +2,28 @@ const eventListener = {
 
     // Class definition
 
-    $listener: {
-        onAppSizeChanged: function(minimizedCallbackPtr, restoredCallbackPtr) {
-            Telegram.WebApp.onEvent('viewportChanged', function() {
-                if (Telegram.WebApp.viewportStableHeight === 0) {
+    $listener:
+    {
+        onAppSizeChanged: function(minimizedCallbackPtr, restoredCallbackPtr)
+        {
+            Telegram.WebApp.onEvent('viewportChanged', function()
+            {
+                if (Telegram.WebApp.viewportStableHeight === 0)
+                {
                     dynCall('v', minimizedCallbackPtr, []);
+
+                    return;
                 } 
-                else {
-                    dynCall('v', restoredCallbackPtr, []);
-                }
+                
+                dynCall('v', restoredCallbackPtr, []);
             });
         }
     },
 
     // External C# calls
 
-    OnAppSizeChanged: function(minimizedCallbackPtr, restoredCallbackPtr) {
+    OnAppSizeChanged: function(minimizedCallbackPtr, restoredCallbackPtr)
+    {
         listener.onAppSizeChanged(minimizedCallbackPtr, restoredCallbackPtr);
     }
 };

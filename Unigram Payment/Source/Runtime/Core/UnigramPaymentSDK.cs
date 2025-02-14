@@ -77,7 +77,7 @@ namespace UnigramPayment.Runtime.Core
         public bool IsDebugMode => _debugMode;
 
         /// <summary>
-        /// Callback that is called when initialization of cdk is completed
+        /// A callback that is called when initialization of cdk is completed
         /// </summary>
         public event IUnigramPaymentCallbacks.OnUnigramConnectInitialize OnInitialized;
 
@@ -89,7 +89,7 @@ namespace UnigramPayment.Runtime.Core
         public event IUnigramPaymentCallbacks.OnSessionTokenRefresh OnSessionTokenRefreshed;
 
         /// <summary>
-        /// Callback, which is called if the valid authorization
+        /// A callback, which is called if the valid authorization
         /// token has expired and could not be renewed due to one of the following reasons
         /// </summary>
         public event IUnigramPaymentCallbacks.OnSessionTokenRefreshFail OnSessionTokenRefreshFailed;
@@ -165,7 +165,8 @@ namespace UnigramPayment.Runtime.Core
 
         /// <summary>
         /// Create an invoice by transferring an item from the item storage for purchase.
-        /// Before creating the invoice, you must create and add the item to the item store, otherwise the creation process will be canceled with an error.
+        /// Before creating the invoice, you must create and add the item to the item store, 
+        /// otherwise the creation process will be canceled with an error.
         /// </summary>
         /// <param name="item">Item configuration for purchase</param>
         public void CreateInvoice(SaleableItem item)
@@ -190,6 +191,8 @@ namespace UnigramPayment.Runtime.Core
                 {
                     OnInvoiceLinkCreateFail(item.Id);
 
+                    UnigramPaymentLogger.LogWarning("Invoice link validation failed");
+
                     return;
                 }
 
@@ -198,23 +201,26 @@ namespace UnigramPayment.Runtime.Core
         }
 
         /// <summary>
-        /// This call opens the invoice that was previously created when `CreateInvoice(SaleableItem item)` was called.
+        /// This call opens the invoice that was previously created 
+        /// when `CreateInvoice(SaleableItem item)` was called.
         /// </summary>
         /// <param name="invoiceUrl">Generated payment link</param>
         public void OpenInvoice(string invoiceUrl, string itemId)
         {
             if (_receivePaymentCheckDelay <= 0)
             {
-                UnigramPaymentLogger.LogWarning($"The transaction delay is 0, please set it and try again.");
+                UnigramPaymentLogger.LogWarning($"The transaction delay " +
+                    $"is 0, please set it and try again.");
 
                 return;
             }
 
             OpenPurchaseInvoice(invoiceUrl, (status, message) =>
             {
-                UnigramPaymentLogger.Log($"Transaction finished with status: {status}, data: {message}");
+                UnigramPaymentLogger.Log($"Transaction finished " +
+                    $"with status: {status}, data: {message}");
 
-                if (status == PaymentStatus.paid)
+                if (status is PaymentStatus.paid)
                 {
                     UnigramPaymentLogger.Log($"Local purchase event " +
                         $"finished with status: {status}, start load payment receipt");
@@ -233,7 +239,8 @@ namespace UnigramPayment.Runtime.Core
                         OnItemPurchase(receipt);
                     });
                 }
-                else if (status is PaymentStatus.cancelled or PaymentStatus.failed)
+                else if (status is PaymentStatus.cancelled
+                    or PaymentStatus.failed)
                 {
                     OnItemPurchaseFail(_currentPurchaseItem);
 
@@ -265,7 +272,8 @@ namespace UnigramPayment.Runtime.Core
         /// </summary>
         public void RefreshToken()
         {
-            UnigramPaymentLogger.Log("A request to update the server access token has been activated.");
+            UnigramPaymentLogger.Log("A request to update " +
+                "the server access token has been activated.");
 
             AuthorizeClient(() =>
             {
@@ -292,7 +300,8 @@ namespace UnigramPayment.Runtime.Core
             {
                 if (history == null || history.Transactions.Count == 0)
                 {
-                    UnigramPaymentLogger.LogWarning("Failed to download the history of successful payments");
+                    UnigramPaymentLogger.LogWarning("Failed to download " +
+                        "the history of successful payments");
 
                     return;
                 }
@@ -319,7 +328,8 @@ namespace UnigramPayment.Runtime.Core
             {
                 if (history == null || history.Transactions.Count == 0)
                 {
-                    UnigramPaymentLogger.LogWarning("Failed to download the history of successful refuns");
+                    UnigramPaymentLogger.LogWarning("Failed to download " +
+                        "the history of successful refuns");
 
                     return;
                 }
@@ -345,12 +355,12 @@ namespace UnigramPayment.Runtime.Core
                     return;
                 }
 
-                UnigramPaymentLogger.Log($"Loaded jwt token: {JwtToken}");
+                UnigramPaymentLogger.Log($"Loaded new session token: {JwtToken}");
 
                 accessTokenClaimed?.Invoke();
 
-                UnigramPaymentLogger.Log("Unigram Payment SDK has been successfully " +
-                    "initialized, connection to the server has been made.");
+                UnigramPaymentLogger.Log("Unigram Payment SDK " +
+                    "has been successfully initialized");
             }));
         }
 
@@ -371,22 +381,27 @@ namespace UnigramPayment.Runtime.Core
             WebAppAPIBridge.OpenPurchaseInvoice(invoiceLink,
             (status, resultPayment) =>
             {
-                invoiceClosed?.Invoke(UnigramUtils.ParsePaymentStatusAfterPurchase(status), resultPayment);
+                invoiceClosed?.Invoke(UnigramUtils
+                    .ParsePaymentStatusAfterPurchase(status), resultPayment);
 
-                UnigramPaymentLogger.Log($"Success purchase with result: {status}, data: {resultPayment}");
+                UnigramPaymentLogger.Log($"Success purchase with " +
+                    $"result: {status}, data: {resultPayment}");
             },
             (paymentStatus) =>
             {
-                invoiceClosed?.Invoke(UnigramUtils.ParsePaymentStatusAfterPurchase(paymentStatus), null);
+                invoiceClosed?.Invoke(UnigramUtils
+                    .ParsePaymentStatusAfterPurchase(paymentStatus), null);
 
-                UnigramPaymentLogger.LogError($"Faied purchase with status: {paymentStatus}");
+                UnigramPaymentLogger.LogError($"Faied purchase " +
+                    $"with status: {paymentStatus}");
             });
         }
 
         private void GetPaymentReceipt(float delay, string userId, string itemId, 
             Action<PaymentReceiptData> paymentReceiptDataClaimed)
         {
-            UnigramPaymentLogger.Log($"Starting load purchase receipt for payload: {userId} with delay: {delay}");
+            UnigramPaymentLogger.Log($"Starting load purchase " +
+                $"receipt for payload: {userId} with delay: {delay}");
 
             StartCoroutine(BotAPIBridge.GetPaymentReceipt(delay, 
                 userId, itemId, (receipt) =>
@@ -395,11 +410,14 @@ namespace UnigramPayment.Runtime.Core
 
                 paymentReceiptDataClaimed?.Invoke(_lastPaymentReceipt);
 
-                UnigramPaymentLogger.Log($"Received data about the transaction {receipt.TransactionId} made with the identifier {receipt.InvoicePayload}");
+                UnigramPaymentLogger.Log($"Received data about the " +
+                    $"transaction {receipt.TransactionId} made with " +
+                    $"the identifier {receipt.InvoicePayload}");
             },
             () =>
             {
-                UnigramPaymentLogger.LogWarning($"Starting resend response for fetch payment receipt with attemp: {_resendAttempsAmount}");
+                UnigramPaymentLogger.LogWarning($"Starting resend response " +
+                    $"for fetch payment receipt with attemp: {_resendAttempsAmount}");
 
                 _resendAttempsAmount++;
 
@@ -409,7 +427,8 @@ namespace UnigramPayment.Runtime.Core
 
                     _resendAttempsAmount = 0;
 
-                    UnigramPaymentLogger.LogError($"Failed to receive a check for payment for some reason");
+                    UnigramPaymentLogger.LogError($"Failed to receive " +
+                        $"a check for payment for some reason");
 
                     return;
                 }
@@ -433,7 +452,8 @@ namespace UnigramPayment.Runtime.Core
 
                 Destroy(gameObject);
 
-                UnigramPaymentLogger.LogError($"Another instance is detected on the scene, running delete...");
+                UnigramPaymentLogger.LogError($"Another instance " +
+                    $"is detected on the scene, running delete...");
             }
         }
 

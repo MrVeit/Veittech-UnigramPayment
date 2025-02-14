@@ -31,6 +31,8 @@ namespace UnigramPayment.Core
         {
             if (!IsExistServerLink())
             {
+                unixTickClaimed?.Invoke(null);
+
                 yield break;
             }
 
@@ -53,23 +55,23 @@ namespace UnigramPayment.Core
 
                     yield break;
                 }
-                else
-                {
-                    var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
-                    var code = request.responseCode;
 
-                    RefreshTokenIfSessionExpired(errorMessage);
+                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
+                var code = request.responseCode;
 
-                    unixTickClaimed?.Invoke(null);
+                RefreshTokenIfSessionExpired(errorMessage);
 
-                    UnigramPaymentLogger.LogError($"Failed to retrieve customer transaction data, reason: {errorMessage}, status code: {code}");
+                unixTickClaimed?.Invoke(null);
 
-                    yield break;
-                }
+                UnigramPaymentLogger.LogError($"Failed to retrieve customer " +
+                    $"transaction data, reason: {errorMessage}, status code: {code}");
+
+                yield break;
             }
         }
 
-        internal static IEnumerator AuthorizeClient(Action<string> authorizationTokenClaimed)
+        internal static IEnumerator AuthorizeClient(
+            Action<string> authorizationTokenClaimed)
         {
             if (!IsExistProjectConfig())
             {
@@ -98,10 +100,12 @@ namespace UnigramPayment.Core
             {
                 var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(API_SECRET_KEY);
 
-                WebRequestUtils.SetUploadHandler(request, WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
+                WebRequestUtils.SetUploadHandler(request,
+                    WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
 
-                WebRequestUtils.SetRequestHeader(request, HEADER_CONTENT_TYPE, HEADER_VALUE_TEXT_PLAIN);
+                WebRequestUtils.SetRequestHeader(request,
+                    HEADER_CONTENT_TYPE, HEADER_VALUE_TEXT_PLAIN);
 
                 yield return request.SendWebRequest();
 
@@ -113,27 +117,37 @@ namespace UnigramPayment.Core
 
                     authorizationTokenClaimed?.Invoke(authToken.Token);
 
-                    UnigramPaymentLogger.Log($"Received JWT Token from API server: {JsonConvert.SerializeObject(authToken)}");
-                    UnigramPaymentLogger.Log("The client is authorized on the server, connection to the api server was successful.");
+                    UnigramPaymentLogger.Log($"Received JWT Token from API " +
+                        $"server: {JsonConvert.SerializeObject(authToken)}");
+                    UnigramPaymentLogger.Log("The client is authorized on the " +
+                        "server, connection to the api server was successful.");
 
                     yield break;
                 }
-                else
-                {
-                    UnigramPaymentLogger.LogError($"Failed to authorize client on api server with message: {request.error}");
 
-                    authorizationTokenClaimed?.Invoke(null);
+                UnigramPaymentLogger.LogError($"Failed to authorize " +
+                    $"client on api server with message: {request.error}");
 
-                    yield break;
-                }
+                authorizationTokenClaimed?.Invoke(null);
+
+                yield break;
             }
         }
 
-        internal static IEnumerator CreateInvoice(SaleableItem product,
-            Action<string> invoiceLinkCreated)
+        internal static IEnumerator CreateInvoice(
+            SaleableItem product, Action<string> invoiceLinkCreated)
         {
             if (!IsExistServerLink())
             {
+                invoiceLinkCreated?.Invoke(null);
+
+                yield break;
+            }
+
+            if (!IsExistSessionToken())
+            {
+                invoiceLinkCreated?.Invoke(null);
+
                 yield break;
             }
 
@@ -155,10 +169,12 @@ namespace UnigramPayment.Core
             {
                 var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(jsonPayload);
 
-                WebRequestUtils.SetUploadHandler(request, WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
+                WebRequestUtils.SetUploadHandler(request, 
+                    WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
 
-                WebRequestUtils.SetRequestHeader(request, HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
+                WebRequestUtils.SetRequestHeader(request, 
+                    HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
                 WebRequestUtils.SetRequestHeader(request, HEADER_AUTHORIZATION,
                     WebRequestUtils.GetAuthorizationHeaderValue(GetSessionToken()));
 
@@ -177,20 +193,18 @@ namespace UnigramPayment.Core
 
                     yield break;
                 }
-                else
-                {
-                    var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
-                    var code = request.responseCode;
 
-                    RefreshTokenIfSessionExpired(errorMessage);
+                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
+                var code = request.responseCode;
 
-                    invoiceLinkCreated?.Invoke(null);
+                RefreshTokenIfSessionExpired(errorMessage);
 
-                    UnigramPaymentLogger.LogError($"Failed to create invoice link, reason: {errorMessage}," +
-                        $" request code: {request.responseCode}");
+                invoiceLinkCreated?.Invoke(null);
 
-                    yield break;
-                }
+                UnigramPaymentLogger.LogError($"Failed to create invoice link, " +
+                    $"reason: {errorMessage}, request code: {request.responseCode}");
+
+                yield break;
             }
         }
 
@@ -199,6 +213,15 @@ namespace UnigramPayment.Core
         {
             if (!IsExistServerLink())
             {
+                refundProcessFinished?.Invoke(false);
+
+                yield break;
+            }
+
+            if (!IsExistSessionToken())
+            {
+                refundProcessFinished?.Invoke(false);
+
                 yield break;
             }
 
@@ -216,10 +239,12 @@ namespace UnigramPayment.Core
             {
                 var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(jsonRefund);
 
-                WebRequestUtils.SetUploadHandler(request, WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
+                WebRequestUtils.SetUploadHandler(request,
+                    WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
 
-                WebRequestUtils.SetRequestHeader(request, HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
+                WebRequestUtils.SetRequestHeader(request, 
+                    HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
                 WebRequestUtils.SetRequestHeader(request, HEADER_AUTHORIZATION,
                     WebRequestUtils.GetAuthorizationHeaderValue(GetSessionToken()));
 
@@ -236,37 +261,47 @@ namespace UnigramPayment.Core
 
                     yield break;
                 }
-                else
-                {
-                    var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
-                    var code = request.responseCode;
 
-                    RefreshTokenIfSessionExpired(errorMessage);
+                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
+                var code = request.responseCode;
 
-                    refundProcessFinished?.Invoke(false);
+                RefreshTokenIfSessionExpired(errorMessage);
 
-                    UnigramPaymentLogger.LogError($"Failed to refund stars previously " +
-                        $"purchased by the user due to the following reason: " +
-                        $"{errorMessage}, response code: {code}");
+                refundProcessFinished?.Invoke(false);
 
-                    yield break;
-                }
+                UnigramPaymentLogger.LogError($"Failed to refund stars previously " +
+                    $"purchased by the user due to the following reason: " +
+                    $"{errorMessage}, response code: {code}");
+
+                yield break;
             }
         }
 
-        internal static IEnumerator GetPaymentReceipt(float delay, string userId, string itemId,
-            Action<PaymentReceiptData> paymentReceiptClaimed, Action resendResponseIfNotExistTransaction)
+        internal static IEnumerator GetPaymentReceipt(float delay, 
+            string userId, string itemId, Action<PaymentReceiptData> paymentReceiptClaimed,
+            Action resendResponseIfNotExistTransaction)
         {
             if (!IsExistServerLink())
             {
+                paymentReceiptClaimed?.Invoke(null);
+
                 yield break;
             }
 
-            UnigramPaymentLogger.Log($"Running a delay `{delay}s` to successfully receive a payment check from the Telegram API");
+            if (!IsExistSessionToken())
+            {
+                paymentReceiptClaimed?.Invoke(null);
+
+                yield break;
+            }
+
+            UnigramPaymentLogger.Log($"Running a delay `{delay}s` to " +
+                $"successfully receive a payment check from the Telegram API");
 
             yield return new WaitForSeconds(delay);
 
-            UnigramPaymentLogger.Log($"Receipt validation sended for item {itemId} by user {userId}");
+            UnigramPaymentLogger.Log($"Receipt validation " +
+                $"sended for item {itemId} by user {userId}");
 
             var url = APIServerRequests.GetPaymentReceiptLink(API_SERVER_LINK);
 
@@ -284,10 +319,12 @@ namespace UnigramPayment.Core
             {
                 var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(jsonPayload);
 
-                WebRequestUtils.SetUploadHandler(request, WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
+                WebRequestUtils.SetUploadHandler(request,
+                    WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
 
-                WebRequestUtils.SetRequestHeader(request, HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
+                WebRequestUtils.SetRequestHeader(request, 
+                    HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
                 WebRequestUtils.SetRequestHeader(request, HEADER_AUTHORIZATION,
                     WebRequestUtils.GetAuthorizationHeaderValue(GetSessionToken()));
 
@@ -298,35 +335,36 @@ namespace UnigramPayment.Core
                     var responseResult = request.downloadHandler.text;
                     var receipt = JsonConvert.DeserializeObject<PaymentReceiptData>(responseResult);
 
-                    UnigramPaymentLogger.Log($"Customer transaction data {responseResult} has been successfully uploaded.");
+                    UnigramPaymentLogger.Log($"Customer transaction data " +
+                        $"{responseResult} has been successfully uploaded.");
 
                     paymentReceiptClaimed?.Invoke(receipt);
 
                     yield break;
                 }
-                else
+
+                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
+
+                var errorResponse = request.downloadHandler.text;
+                var code = request.responseCode;
+
+                var errorData = JsonConvert.DeserializeObject<FailedResponseData>(errorResponse);
+
+                RefreshTokenIfSessionExpired(errorMessage);
+
+                ResendFetchPurchaseReceiptIfNotFound(errorMessage, () =>
                 {
-                    var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
+                    resendResponseIfNotExistTransaction?.Invoke();
 
-                    var errorResponse = request.downloadHandler.text;
-                    var code = request.responseCode;
+                    return;
+                });
 
-                    var errorData = JsonConvert.DeserializeObject<FailedResponseData>(errorResponse);
+                paymentReceiptClaimed?.Invoke(null);
 
-                    RefreshTokenIfSessionExpired(errorMessage);
-                    ResendFetchPurchaseReceiptIfNotFound(errorMessage, () =>
-                    {
-                        resendResponseIfNotExistTransaction?.Invoke();
+                UnigramPaymentLogger.LogError($"Failed to retrieve customer " +
+                    $"transaction data, reason: {errorMessage}, status code: {code}");
 
-                        return;
-                    });
-
-                    paymentReceiptClaimed?.Invoke(null);
-
-                    UnigramPaymentLogger.LogError($"Failed to retrieve customer transaction data, reason: {errorMessage}, status code: {code}");
-
-                    yield break;
-                }
+                yield break;
             }
         }
 
@@ -334,20 +372,27 @@ namespace UnigramPayment.Core
             long totalPass, Action<PurchaseHistoryData> purchaseHistoryClaimed)
         {
             return GetTransactionHistory(amount, totalPass,
-                APIServerRequests.GetPurchaseHistoryLink(API_SERVER_LINK), purchaseHistoryClaimed);
+                APIServerRequests.GetPurchaseHistoryLink(
+                    API_SERVER_LINK), purchaseHistoryClaimed);
         }
 
         internal static IEnumerator GetRefundHistory(long amount,
             long totalPass, Action<RefundHistoryData> refundHistoryClaimed)
         {
             return GetTransactionHistory(amount, totalPass,
-                APIServerRequests.GetRefundHistoryLink(API_SERVER_LINK), refundHistoryClaimed);
+                APIServerRequests.GetRefundHistoryLink(
+                    API_SERVER_LINK), refundHistoryClaimed);
         }
 
         private static IEnumerator GetTransactionHistory<T>(long amount,
             long totalPass, string apiUrl, Action<T> historyClaimed) where T : class
         {
             if (!IsExistServerLink())
+            {
+                yield break;
+            }
+
+            if (!IsExistSessionToken())
             {
                 yield break;
             }
@@ -368,10 +413,12 @@ namespace UnigramPayment.Core
 
                 var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(jsonPayload);
 
-                WebRequestUtils.SetUploadHandler(request, WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
+                WebRequestUtils.SetUploadHandler(request,
+                    WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
 
-                WebRequestUtils.SetRequestHeader(request, HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
+                WebRequestUtils.SetRequestHeader(request, 
+                    HEADER_CONTENT_TYPE, HEADER_VALUE_APPLICATION_JSON);
                 WebRequestUtils.SetRequestHeader(request, HEADER_AUTHORIZATION,
                     WebRequestUtils.GetAuthorizationHeaderValue(GetSessionToken()));
 
@@ -386,42 +433,45 @@ namespace UnigramPayment.Core
 
                     yield break;
                 }
-                else
-                {
-                    var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
-                    var code = request.responseCode;
 
-                    RefreshTokenIfSessionExpired(errorMessage);
+                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
+                var code = request.responseCode;
 
-                    historyClaimed?.Invoke(null);
+                RefreshTokenIfSessionExpired(errorMessage);
 
-                    UnigramPaymentLogger.LogError($"Failed to retrieve transaction history," +
-                        $"reason: {errorMessage}, status code: {code}");
+                historyClaimed?.Invoke(null);
 
-                    yield break;
-                }
+                UnigramPaymentLogger.LogError($"Failed to retrieve " +
+                    $"transaction history, reason: {errorMessage}, status code: {code}");
+
+                yield break;
             }
         }
 
         private static void ResendFetchPurchaseReceiptIfNotFound(
             string errorMessage, Action resendResponseActivated)
         {
-            if (errorMessage == WebRequestUtils.ERROR_TRANSACTION_RECEIPT_NOT_FOUND)
+            if (errorMessage != WebRequestUtils.ERROR_TRANSACTION_RECEIPT_NOT_FOUND)
             {
-                UnigramPaymentLogger.LogError("Target transaction not found, please resend response after delay.");
-
-                resendResponseActivated?.Invoke();
+                return;
             }
+
+            UnigramPaymentLogger.LogError("Target transaction not " +
+                "found, please resend response after delay.");
+
+            resendResponseActivated?.Invoke();
         }
 
         private static void RefreshTokenIfSessionExpired(string errorMessage)
         {
-            if (errorMessage == WebRequestUtils.ERROR_JWT_SESSION_EXPIRED)
+            if (errorMessage != WebRequestUtils.ERROR_JWT_SESSION_EXPIRED)
             {
-                UnigramPaymentSDK.Instance.RefreshToken();
-
-                UnigramPaymentLogger.LogError("The session token has expired.");
+                return;
             }
+
+            UnigramPaymentSDK.Instance.RefreshToken();
+
+            UnigramPaymentLogger.LogError("The session token has expired.");
         }
 
         private static string GetSessionToken()
@@ -430,10 +480,19 @@ namespace UnigramPayment.Core
 
             if (string.IsNullOrEmpty(token))
             {
+                UnigramPaymentLogger.LogError("Session token not exist, something wrong");
+
                 return null;
             }
 
+            UnigramPaymentLogger.Log($"Session token available, value: {token}");
+
             return token;
+        }
+
+        private static bool IsExistSessionToken()
+        {
+            return !string.IsNullOrEmpty(GetSessionToken());
         }
 
         private static bool IsExistServerLink()
@@ -445,7 +504,8 @@ namespace UnigramPayment.Core
 
             if (string.IsNullOrEmpty(API_SERVER_LINK))
             {
-                UnigramPaymentLogger.LogError("No link to a valid api server was found, please fill in the required data and try again later.");
+                UnigramPaymentLogger.LogError("No link to a valid api server " +
+                    "was found, please fill in the required data and try again later.");
 
                 return false;
             }
@@ -462,8 +522,8 @@ namespace UnigramPayment.Core
 
             if (string.IsNullOrEmpty(API_SECRET_KEY))
             {
-                UnigramPaymentLogger.LogError("No client secret key value was found for api server requests," +
-                    " fill in the required data and try again later.");
+                UnigramPaymentLogger.LogError("No client secret key value " +
+                    "was found for api server requests, fill in the required data and try again later.");
 
                 return false;
             }
