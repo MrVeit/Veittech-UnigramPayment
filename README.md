@@ -486,6 +486,8 @@ Go to the `Build Settings` window, then open `Project Settings -> Player -> Reso
 
 These are all the necessary steps that need to be done for the project **to build successfully** and for the library functions **to work properly.**
 
+**IMPORTANT:** If you have Stripping Level set to `High or above Minimal,` you may have problems **processing json data** from the library backend. Be sure to create a `link.xml` file and populate it so that all library functions work without errors.
+
 # Production Backend Deploy
 
 Here is a **step-by-step guide** to deploying an `API server` and a `Telegram bot` on your server.
