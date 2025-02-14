@@ -9,7 +9,7 @@ const webAppLibrary = {
 
             if (typeof allocate === 'undefined')
             {
-                console.log(`Detected Unity version 2023+`);
+                console.log(`[UNIGRAM PAYMENT] Detected Unity version 2023+`);
 
                 const length = lengthBytesUTF8(data) + 1;
 
@@ -32,7 +32,7 @@ const webAppLibrary = {
         {
             if (!webApp.isTelegramApp())
             {
-                console.error("Failed to claim unsafe init data");
+                console.error("[UNIGRAM PAYMENT] Failed to claim unsafe init data");
 
                 return webApp.getAllocString("");
             }
@@ -41,19 +41,19 @@ const webAppLibrary = {
 
             if (initDataUnsafe == null)
             {
-                console.error("Failed to claim unsafe init data, because is null");
+                console.error("[UNIGRAM PAYMENT] Failed to claim "+
+                    "unsafe init data, because is null");
 
                 return webApp.getAllocString("");
             }
 
             if (initDataUnsafe.user == null)
             {
-                console.error("Failed to parse user data in unsafe init data");
+                console.error("[UNIGRAM PAYMENT] Failed to parse "+
+                    "user data in unsafe init data");
 
                 return webApp.getAllocString("");
             }
-            
-            console.log(JSON.stringify(initDataUnsafe));
 
             let filteredData = 
             {
@@ -66,7 +66,7 @@ const webAppLibrary = {
 
             var jsonString = JSON.stringify(filteredData);
 
-            console.log(`Successfully claimed unsafe init data: ${jsonString}`);
+            console.log(`[UNIGRAM PAYMENT] Successfully claimed unsafe init data: ${jsonString}`);
 
             return webApp.getAllocString(jsonString);
         },
@@ -95,7 +95,7 @@ const webAppLibrary = {
         {
             if (!webApp.isTelegramApp())
             {
-                return webApp.getAllocString("");;
+                return webApp.getAllocString("");
             }
 
             return Telegram.WebApp.version;
@@ -156,7 +156,7 @@ const webAppLibrary = {
             {
                 Telegram.WebApp.onEvent('invoiceClosed', function(event)
                 {
-                    var statusPtr = allocate(intArrayFromString(event.status), ALLOC_NORMAL);
+                    var statusPtr = webApp.getAllocString(event.status);
 
                     if (event.status === "paid")
                     {
@@ -166,11 +166,11 @@ const webAppLibrary = {
                         dynCall('vii', successCallbackPtr, [statusPtr, paymentPtr]);
 
                         _free(paymentPtr);
+
+                        return;
                     }
-                    else 
-                    {
-                        dynCall('vi', errorCallbackPtr, [statusPtr]);
-                    }
+                    
+                    dynCall('vi', errorCallbackPtr, [statusPtr]);
 
                     _free(statusPtr);
                 });

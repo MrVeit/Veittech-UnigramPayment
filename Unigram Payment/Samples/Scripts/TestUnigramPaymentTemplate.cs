@@ -102,7 +102,8 @@ namespace TestExample
                 Debug.Log($"Loaded telegram user data: ${JsonConvert.SerializeObject(WebAppAPIBridge.GetTelegramUser())}");
 #endif
 
-                _randomItemForPurchase = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
+                _randomItemForPurchase = _itemsStorage.Items[
+                    Random.Range(0, _itemsStorage.Items.Count - 1)];
 
                 Debug.Log($"Claimed item with payload id: {_randomItemForPurchase.Id}");
 
