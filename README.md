@@ -253,6 +253,7 @@ public sealed class UsageTemplate : MonoBehaviour
 
     private UnigramPaymentSDK _unigramPayment;
 
+    private SaleableItem _itemForPurchase;
     private PaymentReceiptData _itemPaymentReceipt;
 
     private string _latestInvoice;
@@ -291,16 +292,16 @@ public sealed class UsageTemplate : MonoBehaviour
 
     private void CreateInvoice()
     {
-        var randomItemFromStorage = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
+        _itemForPurchase = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
 
-        Debug.Log($"Claimed item with payload id: {randomItemFromStorage.Id}");
+        Debug.Log($"Claimed item with payload id: {_itemForPurchase.Id}");
 
-        _unigramPayment.CreateInvoice(randomItemFromStorage);
+        _unigramPayment.CreateInvoice(_itemForPurchase);
     }
         
     private void OpenInvoice()
     {
-        _unigramPayment.OpenInvoice(_latestInvoice);
+        _unigramPayment.OpenInvoice(_latestInvoice, _itemForPurchase.Id);
     }
 
     private void UnigramPaymentInitialized(bool isSuccess)
@@ -355,6 +356,7 @@ public sealed class UsageTemplate : MonoBehaviour
 
     private UnigramPaymentSDK _unigramPayment;
 
+    private SaleableItem _itemForPurchase;
     private PaymentReceiptData _itemPaymentReceipt;
 
     private string _latestInvoice;
@@ -399,16 +401,16 @@ public sealed class UsageTemplate : MonoBehaviour
 
     private void CreateInvoice()
     {
-        var randomItemFromStorage = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
+        _itemForPurchase = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
 
-        Debug.Log($"Claimed item with payload id: {randomItemFromStorage.Id}");
+        Debug.Log($"Claimed item with payload id: {_itemForPurchase.Id}");
 
-        _unigramPayment.CreateInvoice(randomItemFromStorage);
+        _unigramPayment.CreateInvoice(_itemForPurchase);
     }
         
     private void OpenInvoice()
     {
-        _unigramPayment.OpenInvoice(_latestInvoice);
+        _unigramPayment.OpenInvoice(_latestInvoice, _itemForPurchase.Id);
     }
 
     private void Refund()
@@ -483,6 +485,8 @@ Go to the `Build Settings` window, then open `Project Settings -> Player -> Reso
 </p>
 
 These are all the necessary steps that need to be done for the project **to build successfully** and for the library functions **to work properly.**
+
+**IMPORTANT:** If you have Stripping Level set to `High or above Minimal,` you may have problems **processing json data** from the library backend. Be sure to create a `link.xml` file and fill it so that all library functions work without errors.
 
 # Production Backend Deploy
 
