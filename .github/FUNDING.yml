@@ -12,3 +12,5 @@ lfx_crowdfunding: # Replace with a single LFX Crowdfunding project-name e.g., cl
 polar: # Replace with a single Polar username
 buy_me_a_coffee: # Replace with a single Buy Me a Coffee username
 custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
+ton-wallet: UQDPwEk-cnQXEfFaaNVXywpbKACUMwVRupkgWjhr_f4Ursw6
+multichain-wallet: 0x231803Df809C207FaA330646BB5547fD087FEcA1
