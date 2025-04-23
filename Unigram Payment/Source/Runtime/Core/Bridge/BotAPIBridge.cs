@@ -18,7 +18,6 @@ namespace UnigramPayment.Core
 
         private const string HEADER_CONTENT_TYPE = WebRequestUtils.HEADER_CONTENT_TYPE;
         private const string HEADER_AUTHORIZATION = WebRequestUtils.HEADER_AUTHORIZATION;
-
         private const string HEADER_VALUE_APPLICATION_JSON = WebRequestUtils.HEADER_VALUE_APPLICATION_JSON;
         private const string HEADER_VALUE_TEXT_PLAIN = WebRequestUtils.HEADER_VALUE_TEXT_PLAIN;
 
@@ -59,8 +58,6 @@ namespace UnigramPayment.Core
                 var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
                 var code = request.responseCode;
 
-                RefreshTokenIfSessionExpired(errorMessage);
-
                 unixTickClaimed?.Invoke(null);
 
                 UnigramPaymentLogger.LogError($"Failed to retrieve customer " +
@@ -80,7 +77,7 @@ namespace UnigramPayment.Core
                 yield break;
             }
 
-            if (!IsExisClientSecretKey())
+            if (!IsExistClientSecretKey())
             {
                 authorizationTokenClaimed?.Invoke(null);
 
@@ -350,14 +347,14 @@ namespace UnigramPayment.Core
 
                 var errorData = JsonConvert.DeserializeObject<FailedResponseData>(errorResponse);
 
-                RefreshTokenIfSessionExpired(errorMessage);
-
                 ResendFetchPurchaseReceiptIfNotFound(errorMessage, () =>
                 {
                     resendResponseIfNotExistTransaction?.Invoke();
 
                     return;
                 });
+
+                RefreshTokenIfSessionExpired(errorMessage);
 
                 paymentReceiptClaimed?.Invoke(null);
 
@@ -471,7 +468,7 @@ namespace UnigramPayment.Core
 
             UnigramPaymentSDK.Instance.RefreshToken();
 
-            UnigramPaymentLogger.LogError("The session token has expired.");
+            throw new ClientSessionExpiredError();
         }
 
         private static string GetSessionToken()
@@ -513,7 +510,7 @@ namespace UnigramPayment.Core
             return true;
         }
 
-        private static bool IsExisClientSecretKey()
+        private static bool IsExistClientSecretKey()
         {
             if (!IsExistProjectConfig())
             {

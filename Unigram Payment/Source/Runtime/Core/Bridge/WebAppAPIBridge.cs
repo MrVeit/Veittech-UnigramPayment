@@ -65,7 +65,7 @@ namespace UnigramPayment.Core
         /// <returns></returns>
         public static bool IsTelegramWebApp()
         {
-            return IsTelegramApp();
+            return GetTelegramUser() != null;
         }
 
         /// <summary>
@@ -122,7 +122,8 @@ namespace UnigramPayment.Core
         /// </summary>
         /// <param name="url">Link to open in an external browser</param>
         /// <param name="tryInstantView">Opening the specified link in Instant View mode, if possible</param>
-        public static void OpenLinkExternal(string url, bool tryInstantView = false)
+        public static void OpenLinkExternal(string url, 
+            bool tryInstantView = false)
         {
             OpenExternalLink(url, tryInstantView);
         }
@@ -155,7 +156,8 @@ namespace UnigramPayment.Core
         }
 
         internal static void OpenPurchaseInvoice(string url, 
-            Action<string, string> onInvoiceSuccessfullyPaid, Action<string> onInvoicePayFailed)
+            Action<string, string> onInvoiceSuccessfullyPaid, 
+            Action<string> onInvoicePayFailed)
         {
             _onInvoiceSuccessfullyPaid = (status, paymentReceipt) =>
             {
