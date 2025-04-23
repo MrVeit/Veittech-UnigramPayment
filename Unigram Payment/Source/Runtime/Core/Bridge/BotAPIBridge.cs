@@ -368,17 +368,43 @@ namespace UnigramPayment.Core
         internal static IEnumerator GetPurchaseHistory(long amount,
             long totalPass, Action<PurchaseHistoryData> purchaseHistoryClaimed)
         {
-            return GetTransactionHistory(amount, totalPass,
-                APIServerRequests.GetPurchaseHistoryLink(
-                    API_SERVER_LINK), purchaseHistoryClaimed);
+            var transactionHistoryPending = GetTransactionHistory<PurchaseHistoryData>(
+                amount, totalPass, APIServerRequests.GetPurchaseHistoryLink(
+                API_SERVER_LINK), (purchaseHistory) =>
+            {
+                if (purchaseHistory == null ||
+                    purchaseHistory.Transactions.Count <= 0)
+                {
+                    UnigramPaymentLogger.LogWarning("Purchase history is empty");
+
+                    throw new TransactionHistoryNotFoundError();
+                }
+
+                purchaseHistoryClaimed?.Invoke(purchaseHistory);
+            });
+
+            return transactionHistoryPending;
         }
 
         internal static IEnumerator GetRefundHistory(long amount,
             long totalPass, Action<RefundHistoryData> refundHistoryClaimed)
         {
-            return GetTransactionHistory(amount, totalPass,
-                APIServerRequests.GetRefundHistoryLink(
-                    API_SERVER_LINK), refundHistoryClaimed);
+            var refundHistoryPending = GetTransactionHistory<RefundHistoryData>(
+                amount, totalPass, APIServerRequests.GetRefundHistoryLink(
+                API_SERVER_LINK), (refundHistory) =>
+            {
+                if (refundHistory == null ||
+                    refundHistory.Transactions.Count <= 0)
+                {
+                    UnigramPaymentLogger.LogWarning("Refund history is empty");
+
+                    throw new TransactionHistoryNotFoundError();
+                }
+
+                refundHistoryClaimed?.Invoke(refundHistory);
+            });
+
+            return refundHistoryPending;
         }
 
         private static IEnumerator GetTransactionHistory<T>(long amount,

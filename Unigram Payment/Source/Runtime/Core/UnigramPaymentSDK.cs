@@ -310,7 +310,7 @@ namespace UnigramPayment.Runtime.Core
                         UnigramPaymentLogger.LogWarning("Failed to download " +
                             "the history of successful payments");
 
-                        throw new TransactionHistoryNotFoundError();
+                        return;
                     }
 
                     UnigramPaymentLogger.Log($"Purchase history successfully " +
@@ -345,15 +345,6 @@ namespace UnigramPayment.Runtime.Core
                 amount, totalPass, (history) =>
                 {
                     var transactionAmount = history.Transactions.Count;
-
-                    if (history == null ||
-                        transactionAmount == 0)
-                    {
-                        UnigramPaymentLogger.LogWarning("Failed to download " +
-                            "the history of successful refuns");
-
-                        throw new TransactionHistoryNotFoundError();
-                    }
 
                     UnigramPaymentLogger.Log($"Refund history successfully " +
                         $"claimed with transactions amount: {transactionAmount}");
@@ -494,57 +485,28 @@ namespace UnigramPayment.Runtime.Core
                         GetPaymentReceipt(_receivePaymentCheckDelay,
                             userId, itemId, (receipt) =>
                         {
-                            if (receipt == null)
-                            {
-                                OnItemPurchaseFail(_currentPurchaseItem);
-
-                                if (_currentResendAttemptsAmount <= 0)
-                                {
-                                    throw new ResendAttemptsExpiredError();
-                                }
-
-                                return;
-                            }
-
                             OnItemPurchase(receipt);
 
                             return;
                         });
                     }
-
-                    if (status is PaymentStatus.cancelled)
-                    {
-                        OnItemPurchaseFail(_currentPurchaseItem);
-
-                        UnigramPaymentLogger.LogWarning($"Purchase process " +
-                            $"for item {_currentPurchaseItem.Name} cancelled");
-
-                        throw new PurchaseWindowClosedError();
-                    }
-
-                    if (status is PaymentStatus.failed)
-                    {
-                        OnItemPurchaseFail(_currentPurchaseItem);
-
-                        UnigramPaymentLogger.LogWarning($"Purchase process " +
-                            $"for item {_currentPurchaseItem.Name} failed");
-
-                        throw new PurchaseFailedError();
-                    }
                 });
             }
             catch (PurchaseWindowClosedError windowClosed)
             {
+                OnItemPurchaseFail(_currentPurchaseItem);
                 OnItemPurchaseFail(_currentPurchaseItem, 
                     ErrorTypes.PurchaseWindowClosed);
             }
             catch (PurchaseFailedError purchaseFailed)
             {
+                OnItemPurchaseFail(_currentPurchaseItem);
                 OnItemPurchaseFail(_currentPurchaseItem, 
                     ErrorTypes.PurchaseFailed);
             }
             catch (ResendAttemptsExpiredError attemptsExpired)
             {
+                OnItemPurchaseFail(_currentPurchaseItem);
                 OnItemPurchaseFail(_currentPurchaseItem, 
                     ErrorTypes.AttemptsExpired);
             }
@@ -561,7 +523,7 @@ namespace UnigramPayment.Runtime.Core
                     "Telegram Stars is not supported in Editor. Make a WebGL build to " +
                     "get the result of native transaction status events.");
 
-                return;
+                throw new PurchaseWindowClosedError();
             }
 
             WebAppAPIBridge.OpenPurchaseInvoice(invoiceLink,
@@ -572,6 +534,15 @@ namespace UnigramPayment.Runtime.Core
 
                 UnigramPaymentLogger.Log($"Success purchase with " +
                     $"result: {status}, data: {resultPayment}");
+
+                if (status == $"{PaymentStatus.cancelled}")
+                {
+                    throw new PurchaseWindowClosedError();
+                }
+                else if (status == $"{PaymentStatus.failed}")
+                {
+                    throw new PurchaseFailedError();
+                }
             },
             (paymentStatus) =>
             {
@@ -617,7 +588,7 @@ namespace UnigramPayment.Runtime.Core
                     UnigramPaymentLogger.LogError($"Failed to receive " +
                         $"a check for payment for some reason");
 
-                    return;
+                    throw new ResendAttemptsExpiredError();
                 }
 
                 _currentResendAttemptsAmount = 0;
