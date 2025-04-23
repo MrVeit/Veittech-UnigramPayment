@@ -15,7 +15,7 @@ var config = {
   streamingAssetsUrl: "StreamingAssets",
   companyName: "Veittech",
   productName: "Unigram Payment",
-  productVersion: "1.0.5"
+  productVersion: "1.0.7"
 };
 
 if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
