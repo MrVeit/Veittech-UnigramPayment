@@ -261,7 +261,7 @@ namespace UnigramPayment.Runtime.Core
             }
             catch (ClientSessionExpiredError sessionExpired)
             {
-                UnigramPaymentLogger.LogError($"Refund process cancelled, " +
+                UnigramPaymentLogger.LogError($"Failed to refund transaction, " +
                     $"reason: {sessionExpired.Message}");
 
                 OnRefundTransactionFail(transactionId, ErrorTypes.SessionExpired);
@@ -304,15 +304,6 @@ namespace UnigramPayment.Runtime.Core
                 {
                     var transactionAmount = history.Transactions.Count;
 
-                    if (history == null || 
-                        transactionAmount == 0)
-                    {
-                        UnigramPaymentLogger.LogWarning("Failed to download " +
-                            "the history of successful payments");
-
-                        return;
-                    }
-
                     UnigramPaymentLogger.Log($"Purchase history successfully " +
                         $"claimed with transactions amount: {transactionAmount}");
 
@@ -321,10 +312,16 @@ namespace UnigramPayment.Runtime.Core
             }
             catch (ClientSessionExpiredError sessionExpired)
             {
+                UnigramPaymentLogger.LogError($"Failed to load purchase " +
+                    $"history, reason: {sessionExpired.Message}");
+
                 OnPurchaseHistoryLoadFail(ErrorTypes.SessionExpired);
             }
             catch (TransactionHistoryNotFoundError historyNotFound)
             {
+                UnigramPaymentLogger.LogError($"Failed to load purchase " +
+                    $"history, reason: {historyNotFound.Message}");
+
                 OnPurchaseHistoryLoadFail(ErrorTypes.HistoryNotFound);
             }
         }
@@ -354,10 +351,16 @@ namespace UnigramPayment.Runtime.Core
             }
             catch (ClientSessionExpiredError sessionExpired)
             {
+                UnigramPaymentLogger.LogError($"Failed to load refund " +
+                    $"history, reason: {sessionExpired.Message}");
+
                 OnRefundHistoryLoadFail(ErrorTypes.SessionExpired);
             }
             catch (TransactionHistoryNotFoundError historyNotFound)
             {
+                UnigramPaymentLogger.LogError($"Failed to load refund " +
+                    $"history, reason: {historyNotFound.Message}");
+
                 OnRefundHistoryLoadFail(ErrorTypes.HistoryNotFound);
             }
         }
@@ -450,7 +453,7 @@ namespace UnigramPayment.Runtime.Core
             }
             catch (ClientSessionExpiredError sessionExpired)
             {
-                UnigramPaymentLogger.LogError($"Refund process cancelled, " +
+                UnigramPaymentLogger.LogError($"Failed to create invoice, " +
                     $"reason: {sessionExpired.Message}");
 
                 OnInvoiceLinkCreateFail(item.Id, ErrorTypes.SessionExpired);
@@ -494,18 +497,27 @@ namespace UnigramPayment.Runtime.Core
             }
             catch (PurchaseWindowClosedError windowClosed)
             {
+                UnigramPaymentLogger.LogWarning($"Failed to pay invoice, " +
+                    $"reason: {windowClosed.Message}");
+
                 OnItemPurchaseFail(_currentPurchaseItem);
                 OnItemPurchaseFail(_currentPurchaseItem, 
                     ErrorTypes.PurchaseWindowClosed);
             }
             catch (PurchaseFailedError purchaseFailed)
             {
+                UnigramPaymentLogger.LogWarning($"Failed to pay invoice, " +
+                    $"reason: {purchaseFailed.Message}");
+
                 OnItemPurchaseFail(_currentPurchaseItem);
                 OnItemPurchaseFail(_currentPurchaseItem, 
                     ErrorTypes.PurchaseFailed);
             }
             catch (ResendAttemptsExpiredError attemptsExpired)
             {
+                UnigramPaymentLogger.LogWarning($"Failed to pay invoice, " +
+                    $"reason: {attemptsExpired.Message}");
+
                 OnItemPurchaseFail(_currentPurchaseItem);
                 OnItemPurchaseFail(_currentPurchaseItem, 
                     ErrorTypes.AttemptsExpired);

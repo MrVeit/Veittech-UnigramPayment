@@ -10,6 +10,7 @@ namespace UnigramPayment.Runtime.Data
         [JsonProperty("first_name")]
         public string FirstName { get; set; }
 
+#nullable enable
         [JsonProperty("last_name")]
         public string? LastName { get; set; }
 
@@ -18,5 +19,6 @@ namespace UnigramPayment.Runtime.Data
 
         [JsonProperty("start_param")]
         public string? StartParam { get; set; }
+#nullable restore
     }
 }
