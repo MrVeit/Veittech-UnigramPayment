@@ -16,13 +16,15 @@ namespace UnigramPayment.Runtime.Data
         [JsonProperty("first_name")]
         public string FirstName { get; set; }
 
+        [JsonProperty("language_code")]
+        public string LanguageCode { get; set; }
+
+#nullable enable
         [JsonProperty("last_name")]
         public string? LastName { get; set; }
 
         [JsonProperty("username")]
         public string? Username { get; set; }
-
-        [JsonProperty("language_code")]
-        public string LanguageCode { get; set; }
+#nullable restore
     }
 }
