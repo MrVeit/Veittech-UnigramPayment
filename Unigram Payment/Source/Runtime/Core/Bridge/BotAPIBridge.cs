@@ -132,7 +132,8 @@ namespace UnigramPayment.Core
         }
 
         internal static IEnumerator CreateInvoice(
-            SaleableItem product, Action<string> invoiceLinkCreated)
+            SaleableItem product, Action<string> invoiceLinkCreated, 
+            Action<ErrorTypes> invoiceLinkCreateFailed)
         {
             if (!IsExistServerLink())
             {
@@ -191,22 +192,25 @@ namespace UnigramPayment.Core
                     yield break;
                 }
 
-                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
                 var code = request.responseCode;
-
-                RefreshTokenIfSessionExpired(errorMessage);
-
-                invoiceLinkCreated?.Invoke(null);
+                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
 
                 UnigramPaymentLogger.LogError($"Failed to create invoice link, " +
                     $"reason: {errorMessage}, request code: {request.responseCode}");
+
+                var isExpired = UpdateSessionIfExpired(errorMessage, invoiceLinkCreateFailed);
+
+                if (!isExpired)
+                {
+                    invoiceLinkCreated?.Invoke(null);
+                }
 
                 yield break;
             }
         }
 
-        internal static IEnumerator RefundPayment(long buyerId,
-            string transactionId, Action<bool> refundProcessFinished)
+        internal static IEnumerator RefundPayment(long buyerId, string transactionId, 
+            Action<bool> refundProcessFinished, Action<ErrorTypes> refundProcessFailed)
         {
             if (!IsExistServerLink())
             {
@@ -259,24 +263,26 @@ namespace UnigramPayment.Core
                     yield break;
                 }
 
-                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
                 var code = request.responseCode;
-
-                RefreshTokenIfSessionExpired(errorMessage);
-
-                refundProcessFinished?.Invoke(false);
+                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
 
                 UnigramPaymentLogger.LogError($"Failed to refund stars previously " +
                     $"purchased by the user due to the following reason: " +
                     $"{errorMessage}, response code: {code}");
 
+                var isExpired = UpdateSessionIfExpired(errorMessage, refundProcessFailed);
+
+                if (!isExpired)
+                {
+                    refundProcessFinished?.Invoke(false);
+                }
+
                 yield break;
             }
         }
 
-        internal static IEnumerator GetPaymentReceipt(float delay, 
-            string userId, string itemId, Action<PaymentReceiptData> paymentReceiptClaimed,
-            Action resendResponseIfNotExistTransaction)
+        internal static IEnumerator GetPaymentReceipt(float delay, string userId, string itemId, 
+            Action<PaymentReceiptData> paymentReceiptClaimed, Action<ErrorTypes> paymentReceiptLoadFailed)
         {
             if (!IsExistServerLink())
             {
@@ -340,75 +346,63 @@ namespace UnigramPayment.Core
                     yield break;
                 }
 
-                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
-
-                var errorResponse = request.downloadHandler.text;
                 var code = request.responseCode;
-
-                var errorData = JsonConvert.DeserializeObject<FailedResponseData>(errorResponse);
-
-                ResendFetchPurchaseReceiptIfNotFound(errorMessage, () =>
-                {
-                    resendResponseIfNotExistTransaction?.Invoke();
-
-                    return;
-                });
-
-                RefreshTokenIfSessionExpired(errorMessage);
-
-                paymentReceiptClaimed?.Invoke(null);
+                var errorResponse = request.downloadHandler.text;
+                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
 
                 UnigramPaymentLogger.LogError($"Failed to retrieve customer " +
                     $"transaction data, reason: {errorMessage}, status code: {code}");
+
+                var errorData = JsonConvert.DeserializeObject<FailedResponseData>(errorResponse);
+                var isExpired = UpdateSessionIfExpired(errorMessage, paymentReceiptLoadFailed);
+
+                ResendFetchPurchaseReceiptIfNotFound(errorMessage, paymentReceiptLoadFailed);
+
+                if (!isExpired)
+                {
+                    paymentReceiptClaimed?.Invoke(null);
+                }
 
                 yield break;
             }
         }
 
-        internal static IEnumerator GetPurchaseHistory(long amount,
-            long totalPass, Action<PurchaseHistoryData> purchaseHistoryClaimed)
+        internal static IEnumerator GetPurchaseHistory(long amount, long totalPass, 
+            Action<PurchaseHistoryData> purchaseHistoryClaimed, Action<ErrorTypes> purchaseHistoryLoadFailed)
         {
             var transactionHistoryPending = GetTransactionHistory<PurchaseHistoryData>(
                 amount, totalPass, APIServerRequests.GetPurchaseHistoryLink(
                 API_SERVER_LINK), (purchaseHistory) =>
             {
-                if (purchaseHistory == null ||
-                    purchaseHistory.Transactions.Count <= 0)
-                {
-                    UnigramPaymentLogger.LogWarning("Purchase history is empty");
-
-                    throw new TransactionHistoryNotFoundError();
-                }
-
                 purchaseHistoryClaimed?.Invoke(purchaseHistory);
+            },
+            (errorReason) =>
+            {
+                purchaseHistoryLoadFailed?.Invoke(errorReason);
             });
 
             return transactionHistoryPending;
         }
 
-        internal static IEnumerator GetRefundHistory(long amount,
-            long totalPass, Action<RefundHistoryData> refundHistoryClaimed)
+        internal static IEnumerator GetRefundHistory(long amount, long totalPass, 
+            Action<RefundHistoryData> refundHistoryClaimed, Action<ErrorTypes> refundHistoryLoadFailed)
         {
             var refundHistoryPending = GetTransactionHistory<RefundHistoryData>(
                 amount, totalPass, APIServerRequests.GetRefundHistoryLink(
                 API_SERVER_LINK), (refundHistory) =>
             {
-                if (refundHistory == null ||
-                    refundHistory.Transactions.Count <= 0)
-                {
-                    UnigramPaymentLogger.LogWarning("Refund history is empty");
-
-                    throw new TransactionHistoryNotFoundError();
-                }
-
                 refundHistoryClaimed?.Invoke(refundHistory);
+            },
+            (errorReason) =>
+            {
+                refundHistoryLoadFailed?.Invoke(errorReason);
             });
 
             return refundHistoryPending;
         }
 
-        private static IEnumerator GetTransactionHistory<T>(long amount,
-            long totalPass, string apiUrl, Action<T> historyClaimed) where T : class
+        private static IEnumerator GetTransactionHistory<T>(long amount, long totalPass, string apiUrl,
+            Action<T> historyClaimed, Action<ErrorTypes> historyLoadFailed) where T : class
         {
             if (!IsExistServerLink())
             {
@@ -457,22 +451,25 @@ namespace UnigramPayment.Core
                     yield break;
                 }
 
-                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
                 var code = request.responseCode;
-
-                RefreshTokenIfSessionExpired(errorMessage);
-
-                historyClaimed?.Invoke(null);
+                var errorMessage = WebRequestUtils.ParseErrorReasonFromResponse(request);
 
                 UnigramPaymentLogger.LogError($"Failed to retrieve " +
                     $"transaction history, reason: {errorMessage}, status code: {code}");
+
+                var isExpired = UpdateSessionIfExpired(errorMessage, historyLoadFailed);
+
+                if (!isExpired)
+                {
+                    historyClaimed?.Invoke(null);
+                }
 
                 yield break;
             }
         }
 
         private static void ResendFetchPurchaseReceiptIfNotFound(
-            string errorMessage, Action resendResponseActivated)
+            string errorMessage, Action<ErrorTypes> resendResponseActivated)
         {
             if (errorMessage != WebRequestUtils.ERROR_TRANSACTION_RECEIPT_NOT_FOUND)
             {
@@ -482,19 +479,26 @@ namespace UnigramPayment.Core
             UnigramPaymentLogger.LogError("Target transaction not " +
                 "found, please resend response after delay.");
 
-            resendResponseActivated?.Invoke();
+            resendResponseActivated?.Invoke(ErrorTypes.HistoryNotFound);
         }
 
-        private static void RefreshTokenIfSessionExpired(string errorMessage)
+        private static bool UpdateSessionIfExpired(
+            string errorMessage, Action<ErrorTypes> errorCallback)
         {
-            if (errorMessage != WebRequestUtils.ERROR_JWT_SESSION_EXPIRED)
+            var isExpired = errorMessage == WebRequestUtils.ERROR_JWT_SESSION_EXPIRED;
+
+            if (!isExpired)
             {
-                return;
+                return false;
             }
+
+            UnigramPaymentLogger.LogWarning("Client session is expired, try to update...");
 
             UnigramPaymentSDK.Instance.RefreshToken();
 
-            throw new ClientSessionExpiredError();
+            errorCallback?.Invoke(ErrorTypes.SessionExpired);
+
+            return isExpired;
         }
 
         private static string GetSessionToken()

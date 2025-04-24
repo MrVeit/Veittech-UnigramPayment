@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using UnigramPayment.Runtime.Data;
 using UnigramPayment.Runtime.Common;
 using UnigramPayment.Runtime.Utils.Debugging;
@@ -8,6 +9,23 @@ namespace UnigramPayment.Runtime.Utils
 {
     internal sealed class UnigramUtils
     {
+        internal static ErrorTypes ParseErrorFromStatus(PaymentStatus status)
+        {
+            var errorMap = new Dictionary<ErrorTypes, PaymentStatus>()
+            {
+                {
+                    ErrorTypes.PurchaseFailed, PaymentStatus.failed
+                },
+                {
+                    ErrorTypes.PurchaseWindowClosed, PaymentStatus.cancelled
+                }
+            };
+
+            var foundedError = errorMap.FirstOrDefault(foundedError => foundedError.Value == status);
+
+            return foundedError.Key;
+        }
+
         internal static PaymentStatus ParsePaymentStatusAfterPurchase(string paymentStatus)
         {
             var status = (PaymentStatus)Enum.Parse(

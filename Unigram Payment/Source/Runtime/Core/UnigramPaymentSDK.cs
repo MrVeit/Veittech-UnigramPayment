@@ -13,7 +13,7 @@ namespace UnigramPayment.Runtime.Core
     [SelectionBase]
     [DisallowMultipleComponent]
     [HelpURL("https://github.com/MrVeit/Veittech-UnigramPayment/blob/master/README.md")]
-    public sealed class UnigramPaymentSDK : MonoBehaviour, IUnigramPaymentCallbacks, 
+    public sealed class UnigramPaymentSDK : MonoBehaviour, IUnigramPaymentCallbacks,
         IUnigramPaymentTransactionCallbacks, IUnigramPaymentUtilsCallbacks
     {
         private static readonly object _lock = new();
@@ -232,7 +232,7 @@ namespace UnigramPayment.Runtime.Core
                 UnigramPaymentLogger.Log("Invoice link by " +
                     "config created, try to open...");
 
-                TryPayInvoiceIfConfirmed(LastInvoiceLink, 
+                TryPayInvoiceIfConfirmed(LastInvoiceLink,
                     _currentPurchaseItem.Id);
             });
         }
@@ -249,23 +249,19 @@ namespace UnigramPayment.Runtime.Core
             var buyerId = long.Parse(receipt.BuyerId);
             var transactionId = receipt.TransactionId;
 
-            try
+            StartCoroutine(BotAPIBridge.RefundPayment(buyerId, transactionId,
+            (isSuccess) =>
             {
-                StartCoroutine(BotAPIBridge.RefundPayment(
-                buyerId, transactionId, (isSuccess) =>
-                {
-                    OnRefundTransactionFinish(LastRefundedTransaction, isSuccess);
+                OnRefundTransactionFinish(LastRefundedTransaction, isSuccess);
 
-                    UnigramPaymentLogger.Log($"Refund process finished with result: {isSuccess}");
-                }));
-            }
-            catch (ClientSessionExpiredError sessionExpired)
+                UnigramPaymentLogger.Log($"Refund process finished with result: {isSuccess}");
+            },
+            (errorReason) =>
             {
-                UnigramPaymentLogger.LogError($"Failed to refund transaction, " +
-                    $"reason: {sessionExpired.Message}");
+                UnigramPaymentLogger.LogError($"Failed to refund transaction, reason: {errorReason}");
 
                 OnRefundTransactionFail(transactionId, ErrorTypes.SessionExpired);
-            }
+            }));
         }
 
         /// <summary>
@@ -297,33 +293,23 @@ namespace UnigramPayment.Runtime.Core
         public void GetPurchaseHistory(
             int amount = 0, int totalPass = 0)
         {
-            try
+            StartCoroutine(BotAPIBridge.GetPurchaseHistory(amount, totalPass,
+            (history) =>
             {
-                StartCoroutine(BotAPIBridge.GetPurchaseHistory(
-                amount, totalPass, (history) =>
-                {
-                    var transactionAmount = history.Transactions.Count;
+                var transactionAmount = history.Transactions.Count;
 
-                    UnigramPaymentLogger.Log($"Purchase history successfully " +
-                        $"claimed with transactions amount: {transactionAmount}");
+                UnigramPaymentLogger.Log($"Purchase history successfully " +
+                    $"claimed with transactions amount: {transactionAmount}");
 
-                    OnPurchaseHistoryLoad(history);
-                }));
-            }
-            catch (ClientSessionExpiredError sessionExpired)
+                OnPurchaseHistoryLoad(history);
+            },
+            (errorReason) =>
             {
                 UnigramPaymentLogger.LogError($"Failed to load purchase " +
-                    $"history, reason: {sessionExpired.Message}");
+                    $"history, reason: {errorReason}");
 
-                OnPurchaseHistoryLoadFail(ErrorTypes.SessionExpired);
-            }
-            catch (TransactionHistoryNotFoundError historyNotFound)
-            {
-                UnigramPaymentLogger.LogError($"Failed to load purchase " +
-                    $"history, reason: {historyNotFound.Message}");
-
-                OnPurchaseHistoryLoadFail(ErrorTypes.HistoryNotFound);
-            }
+                OnPurchaseHistoryLoadFail(errorReason);
+            }));
         }
 
         /// <summary>
@@ -336,33 +322,23 @@ namespace UnigramPayment.Runtime.Core
         public void GetRefundHistory(
             int amount = 0, int totalPass = 0)
         {
-            try
+            StartCoroutine(BotAPIBridge.GetRefundHistory(amount, totalPass,
+                (history) =>
             {
-                StartCoroutine(BotAPIBridge.GetRefundHistory(
-                amount, totalPass, (history) =>
-                {
-                    var transactionAmount = history.Transactions.Count;
+                var transactionAmount = history.Transactions.Count;
 
-                    UnigramPaymentLogger.Log($"Refund history successfully " +
-                        $"claimed with transactions amount: {transactionAmount}");
+                UnigramPaymentLogger.Log($"Refund history successfully " +
+                    $"claimed with transactions amount: {transactionAmount}");
 
-                    OnRefundHistoryLoad(history);
-                }));
-            }
-            catch (ClientSessionExpiredError sessionExpired)
+                OnRefundHistoryLoad(history);
+            },
+                (errorReason) =>
             {
                 UnigramPaymentLogger.LogError($"Failed to load refund " +
-                    $"history, reason: {sessionExpired.Message}");
+                    $"history, reason: {errorReason}");
 
-                OnRefundHistoryLoadFail(ErrorTypes.SessionExpired);
-            }
-            catch (TransactionHistoryNotFoundError historyNotFound)
-            {
-                UnigramPaymentLogger.LogError($"Failed to load refund " +
-                    $"history, reason: {historyNotFound.Message}");
-
-                OnRefundHistoryLoadFail(ErrorTypes.HistoryNotFound);
-            }
+                OnRefundHistoryLoadFail(errorReason);
+            }));
         }
 
         /// <summary>
@@ -413,8 +389,8 @@ namespace UnigramPayment.Runtime.Core
             }));
         }
 
-        private void CreateTargetInvoice(SaleableItem item,
-            Action invoiceCreated)
+        private void CreateTargetInvoice(
+            SaleableItem item, Action invoiceCreated)
         {
             var saleableItem = UnigramUtils.FindItemInItemsStorage(_itemsStorage, item);
 
@@ -428,36 +404,31 @@ namespace UnigramPayment.Runtime.Core
 
             _currentPurchaseItem = item;
 
-            try
+            StartCoroutine(BotAPIBridge.CreateInvoice(
+            item, (invoiceLink) =>
             {
-                StartCoroutine(BotAPIBridge.CreateInvoice(item, (invoiceLink) =>
+                if (string.IsNullOrEmpty(invoiceLink))
                 {
-                    LastInvoiceLink = invoiceLink;
+                    UnigramPaymentLogger.LogWarning("Invoice link validation failed");
 
-                    if (LastInvoiceLink == null)
-                    {
-                        OnInvoiceLinkCreateFail(item.Id);
+                    OnInvoiceLinkCreateFail(item.Id, ErrorTypes.InvalidInvoiceLink);
 
-                        UnigramPaymentLogger.LogWarning("Invoice link validation failed");
+                    return;
+                }
 
-                        return;
-                    }
+                LastInvoiceLink = invoiceLink;
 
-                    if (invoiceCreated != null)
-                    {
-                        invoiceCreated?.Invoke();
-                    }
+                if (invoiceCreated != null)
+                {
+                    invoiceCreated?.Invoke();
+                }
 
-                    OnInvoiceLinkCreate(item.Id, LastInvoiceLink);
-                }));
-            }
-            catch (ClientSessionExpiredError sessionExpired)
+                OnInvoiceLinkCreate(item.Id, LastInvoiceLink);
+            },
+            (errorReason) =>
             {
-                UnigramPaymentLogger.LogError($"Failed to create invoice, " +
-                    $"reason: {sessionExpired.Message}");
-
-                OnInvoiceLinkCreateFail(item.Id, ErrorTypes.SessionExpired);
-            }
+                OnInvoiceLinkCreateFail(item.Id, errorReason);
+            }));
         }
 
         private void TryPayInvoiceIfConfirmed(
@@ -471,57 +442,41 @@ namespace UnigramPayment.Runtime.Core
                 _receivePaymentCheckDelay = 15f;
             }
 
-            try
+            OpenPurchaseInvoice(invoiceUrl, (status, message) =>
             {
-                OpenPurchaseInvoice(invoiceUrl, (status, message) =>
+                UnigramPaymentLogger.Log($"Transaction finished " +
+                    $"with status: {status}, extra data: {message}");
+
+                if (status is PaymentStatus.paid)
                 {
-                    UnigramPaymentLogger.Log($"Transaction finished " +
-                        $"with status: {status}, data: {message}");
+                    UnigramPaymentLogger.Log($"Local purchase event " +
+                        $"finished with status: {status}, start load payment receipt");
 
-                    if (status is PaymentStatus.paid)
+                    var userId = WebAppAPIBridge.GetTelegramUser().Id.ToString();
+
+                    GetPaymentReceipt(_receivePaymentCheckDelay,
+                        userId, itemId, (receipt) =>
                     {
-                        UnigramPaymentLogger.Log($"Local purchase event " +
-                            $"finished with status: {status}, start load payment receipt");
-
-                        var userId = WebAppAPIBridge.GetTelegramUser().Id.ToString();
-
-                        GetPaymentReceipt(_receivePaymentCheckDelay,
-                            userId, itemId, (receipt) =>
+                        if (receipt != null)
                         {
                             OnItemPurchase(receipt);
 
                             return;
-                        });
-                    }
-                });
-            }
-            catch (PurchaseWindowClosedError windowClosed)
-            {
-                UnigramPaymentLogger.LogWarning($"Failed to pay invoice, " +
-                    $"reason: {windowClosed.Message}");
+                        }
 
-                OnItemPurchaseFail(_currentPurchaseItem);
-                OnItemPurchaseFail(_currentPurchaseItem, 
-                    ErrorTypes.PurchaseWindowClosed);
-            }
-            catch (PurchaseFailedError purchaseFailed)
-            {
-                UnigramPaymentLogger.LogWarning($"Failed to pay invoice, " +
-                    $"reason: {purchaseFailed.Message}");
+                        OnItemPurchaseFail(_currentPurchaseItem, ErrorTypes.AttemptsExpired);
 
-                OnItemPurchaseFail(_currentPurchaseItem);
-                OnItemPurchaseFail(_currentPurchaseItem, 
-                    ErrorTypes.PurchaseFailed);
-            }
-            catch (ResendAttemptsExpiredError attemptsExpired)
-            {
-                UnigramPaymentLogger.LogWarning($"Failed to pay invoice, " +
-                    $"reason: {attemptsExpired.Message}");
+                        return;
+                    });
+                }
 
-                OnItemPurchaseFail(_currentPurchaseItem);
-                OnItemPurchaseFail(_currentPurchaseItem, 
-                    ErrorTypes.AttemptsExpired);
-            }
+                var parsedError = UnigramUtils.ParseErrorFromStatus(status);
+
+                UnigramPaymentLogger.LogError($"Failed to pay opened " +
+                    $"invoice by item {itemId}, reason: {parsedError}");
+
+                OnItemPurchaseFail(_currentPurchaseItem, parsedError);
+            });
         }
 
         private void OpenPurchaseInvoice(string invoiceLink,
@@ -535,45 +490,48 @@ namespace UnigramPayment.Runtime.Core
                     "Telegram Stars is not supported in Editor. Make a WebGL build to " +
                     "get the result of native transaction status events.");
 
-                throw new PurchaseWindowClosedError();
+                return;
             }
 
             WebAppAPIBridge.OpenPurchaseInvoice(invoiceLink,
             (status, resultPayment) =>
             {
-                invoiceClosed?.Invoke(UnigramUtils
-                    .ParsePaymentStatusAfterPurchase(status), resultPayment);
+                var parsedStatus = UnigramUtils.ParsePaymentStatusAfterPurchase(status);
 
-                UnigramPaymentLogger.Log($"Success purchase with " +
-                    $"result: {status}, data: {resultPayment}");
+                if (parsedStatus == PaymentStatus.paid)
+                {
+                    invoiceClosed?.Invoke(parsedStatus, resultPayment);
 
-                if (status == $"{PaymentStatus.cancelled}")
-                {
-                    throw new PurchaseWindowClosedError();
+                    UnigramPaymentLogger.Log($"Success purchase with " +
+                        $"result: {status}, data: {resultPayment}");
+
+                    return;
                 }
-                else if (status == $"{PaymentStatus.failed}")
-                {
-                    throw new PurchaseFailedError();
-                }
+
+                UnigramPaymentLogger.LogWarning($"Failed to purchase item " +
+                    $"by link {invoiceLink}, payment status: {parsedStatus}");
+
+                invoiceClosed?.Invoke(parsedStatus, null);
             },
             (paymentStatus) =>
             {
-                invoiceClosed?.Invoke(UnigramUtils
-                    .ParsePaymentStatusAfterPurchase(paymentStatus), null);
+                var parsedStatus = UnigramUtils.ParsePaymentStatusAfterPurchase(paymentStatus);
 
-                UnigramPaymentLogger.LogError($"Faied purchase " +
+                invoiceClosed?.Invoke(parsedStatus, null);
+
+                UnigramPaymentLogger.LogError($"Failed purchase " +
                     $"with status: {paymentStatus}");
             });
         }
 
-        private void GetPaymentReceipt(float delay, string userId, 
-            string itemId, Action<PaymentReceiptData> paymentReceiptDataClaimed)
+        private void GetPaymentReceipt(float delay, string userId, string itemId,
+            Action<PaymentReceiptData> paymentReceiptDataClaimed)
         {
             UnigramPaymentLogger.Log($"Starting load purchase " +
                 $"receipt for payload: {userId} with delay: {delay}");
 
-            StartCoroutine(BotAPIBridge.GetPaymentReceipt(delay, 
-                userId, itemId, (receipt) =>
+            StartCoroutine(BotAPIBridge.GetPaymentReceipt(delay, userId, itemId,
+            (receipt) =>
             {
                 _lastPaymentReceipt = receipt;
 
@@ -583,7 +541,7 @@ namespace UnigramPayment.Runtime.Core
                     $"transaction {receipt.TransactionId} made with " +
                     $"the identifier {receipt.InvoicePayload}");
             },
-            () =>
+            (errorReason) =>
             {
                 UnigramPaymentLogger.LogWarning($"Starting resend response " +
                     $"for fetch payment receipt with attemp: " +
@@ -599,8 +557,6 @@ namespace UnigramPayment.Runtime.Core
 
                     UnigramPaymentLogger.LogError($"Failed to receive " +
                         $"a check for payment for some reason");
-
-                    throw new ResendAttemptsExpiredError();
                 }
 
                 _currentResendAttemptsAmount = 0;
@@ -632,22 +588,35 @@ namespace UnigramPayment.Runtime.Core
             }
         }
 
-        private void OnInitialize(bool isSuccess) => OnInitialized?.Invoke(isSuccess);
+        private void OnInitialize(bool isSuccess) => 
+            OnInitialized?.Invoke(isSuccess);
 
-        private void OnSessionTokenRefresh() => OnSessionTokenRefreshed?.Invoke();
-        private void OnSessionTokenRefreshFail() => OnSessionTokenRefreshFailed?.Invoke();
+        private void OnSessionTokenRefresh() => 
+            OnSessionTokenRefreshed?.Invoke();
+        private void OnSessionTokenRefreshFail() => 
+            OnSessionTokenRefreshFailed?.Invoke();
 
         private void OnInvoiceLinkCreate(string itemId, string invoiceUrl) =>
             OnInvoiceLinkCreated?.Invoke(itemId, invoiceUrl);
-        private void OnInvoiceLinkCreateFail(string itemId) => OnInvoiceLinkCreateFailed?.Invoke(itemId);
-        private void OnInvoiceLinkCreateFail(string itemId, ErrorTypes reason) => 
-            OnFullInvoiceLinkCreateFailed?.Invoke(itemId, reason);
+        private void OnInvoiceLinkCreateFail(string itemId) => 
+            OnInvoiceLinkCreateFailed?.Invoke(itemId);
+        private void OnInvoiceLinkCreateFail(string itemId, ErrorTypes reason)
+        {
+            OnInvoiceLinkCreateFail(itemId);
 
-        private void OnItemPurchase(PaymentReceiptData receipt) => OnItemPurchased?.Invoke(receipt);
+            OnFullInvoiceLinkCreateFailed?.Invoke(itemId, reason);
+        }
+
+        private void OnItemPurchase(PaymentReceiptData receipt) => 
+            OnItemPurchased?.Invoke(receipt);
         private void OnItemPurchaseFail(SaleableItem failedPurchaseItem) =>
             OnItemPurchaseFailed?.Invoke(failedPurchaseItem);
-        private void OnItemPurchaseFail(SaleableItem failedPurchaseItem, ErrorTypes reason) =>
+        private void OnItemPurchaseFail(SaleableItem failedPurchaseItem, ErrorTypes reason)
+        {
+            OnItemPurchaseFail(_currentPurchaseItem);
+
             OnFullItemPurchaseFailed?.Invoke(failedPurchaseItem, reason);
+        }
 
         private void OnRefundTransactionFinish(string transactionId,
             bool isSuccess) => OnRefundTransactionFinished?.Invoke(transactionId, isSuccess);
@@ -659,9 +628,12 @@ namespace UnigramPayment.Runtime.Core
         private void OnPurchaseHistoryLoadFail(ErrorTypes reason) => 
             OnPurchaseHistoryLoadFailed?.Invoke(reason);
 
-        private void OnRefundHistoryLoad(RefundHistoryData history) => OnRefundHistoryLoaded?.Invoke(history);
-        private void OnRefundHistoryLoadFail(ErrorTypes reason) => OnRefundHistoryLoadFailed?.Invoke(reason);
+        private void OnRefundHistoryLoad(RefundHistoryData history) => 
+            OnRefundHistoryLoaded?.Invoke(history);
+        private void OnRefundHistoryLoadFail(ErrorTypes reason) => 
+            OnRefundHistoryLoadFailed?.Invoke(reason);
 
-        private void OnTimeTickLoad(long timeTick) => OnTimeTickLoaded?.Invoke(timeTick);
+        private void OnTimeTickLoad(long timeTick) => 
+            OnTimeTickLoaded?.Invoke(timeTick);
     }
 }

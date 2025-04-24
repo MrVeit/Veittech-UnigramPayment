@@ -4,8 +4,10 @@ namespace UnigramPayment.Runtime.Common
     {
         SessionExpired,
         AttemptsExpired,
+        InvalidInvoiceLink,
         PurchaseWindowClosed,
         PurchaseFailed,
-        HistoryNotFound
+        HistoryNotFound,
+        TransactionNotFound
     }
 }
