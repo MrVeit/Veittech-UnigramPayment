@@ -74,3 +74,5 @@ crashlytics-build.properties
 /Assets
 /Resources
 /Unigram Payment
+
+*.meta
