@@ -186,7 +186,7 @@ public sealed class UsageTemplate : MonoBehaviour
         _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
 
         _unigramPayment.OnInvoiceLinkCreated -= PaymentInvoiceCreated;
-        _unigramPayment.OnInvoiceLinkCreateFailed -= PaymentInvoiceCreateFailed;
+        _unigramPayment.OnFullInvoiceLinkCreateFailed -= PaymentInvoiceCreateFailed;
     }
 
     private void Start()
@@ -198,7 +198,7 @@ public sealed class UsageTemplate : MonoBehaviour
         _unigramPayment.OnInitialized += UnigramPaymentInitialized;
 
         _unigramPayment.OnInvoiceLinkCreated += PaymentInvoiceCreated;
-        _unigramPayment.OnInvoiceLinkCreateFailed += PaymentInvoiceCreateFailed;
+        _unigramPayment.OnFullInvoiceLinkCreateFailed += PaymentInvoiceCreateFailed;
 
         _unigramPayment.Initialize();
     }
@@ -227,14 +227,16 @@ public sealed class UsageTemplate : MonoBehaviour
         Debug.Log($"The link to purchase the test item {itemPayloadId} has been successfully generated: {url}");
     }
 
-    private void PaymentInvoiceCreateFailed(string itemPayloadId)
+    private void PaymentInvoiceCreateFailed(string itemPayloadId, ErrorTypes reason)
     {
-        Debug.LogError($"Failed to create a payment link for item {itemPayloadId} for one of the following reasons");
+        Debug.LogError($"Failed to create a payment link for item {itemPayloadId}, reason: {reason}");
     }
 }
 ```
 
 Now you will easily get a payment link, which you can open in your browser and pay in `your Telegram bot` if it was launched locally.
+
+In case the payment link could not be successfully created based on the product configuration, you can subscribe to the `OnFullInvoiceLinkCreateFailed` event, where in addition to the product ID, the reason will be specified via `ErrorTypes`.
 
 **IMPORTANT:** Processing a callback with receipt of payment check and subsequent refund **NOT AVAILABLE IN EDITOR**. So you need to create an assembly for WebGL and upload it to `Github Pages` or anywhere else where you have an `HTTPS Connection` and a valid `SSL Certificate` (I won't describe a detailed tutorial here, as you can find that online).
 
@@ -266,10 +268,10 @@ public sealed class UsageTemplate : MonoBehaviour
         _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
 
         _unigramPayment.OnInvoiceLinkCreated -= PaymentInvoiceCreated;
-        _unigramPayment.OnInvoiceLinkCreateFailed -= PaymentInvoiceCreateFailed;
+        _unigramPayment.‎OnFullInvoiceLinkCreateFailed -= PaymentInvoiceCreateFailed;
 
         _unigramPayment.OnItemPurchased -= ItemPurchased;
-        _unigramPayment.OnItemPurchaseFailed -= ItemPurchaseFailed;
+        _unigramPayment.OnFullItemPurchaseFailed  -= ItemPurchaseFailed;
     }
 
     private void Start()
@@ -282,10 +284,10 @@ public sealed class UsageTemplate : MonoBehaviour
         _unigramPayment.OnInitialized += UnigramPaymentInitialized;
 
         _unigramPayment.OnInvoiceLinkCreated += PaymentInvoiceCreated;
-        _unigramPayment.OnInvoiceLinkCreateFailed += PaymentInvoiceCreateFailed;
+        _unigramPayment.‎OnFullInvoiceLinkCreateFailed += PaymentInvoiceCreateFailed;
 
         _unigramPayment.OnItemPurchased += ItemPurchased;
-        _unigramPayment.OnItemPurchaseFailed += ItemPurchaseFailed;
+        _unigramPayment.OnFullItemPurchaseFailed  += ItemPurchaseFailed;
 
         _unigramPayment.Initialize();
     }
@@ -319,9 +321,9 @@ public sealed class UsageTemplate : MonoBehaviour
         Debug.Log($"The link to purchase the test item {itemPayloadId} has been successfully generated: {url}");
     }
 
-    private void PaymentInvoiceCreateFailed(string itemPayloadId)
+    private void PaymentInvoiceCreateFailed(string itemPayloadId, ErrorTypes reason)
     {
-        Debug.LogError($"Failed to create a payment link for item {itemPayloadId} for one of the following reasons");
+        Debug.LogError($"Failed to create a payment link for item {itemPayloadId}, reason: {reason}");
     }
 
     private void ItemPurchased(PaymentReceiptData receipt)
@@ -333,25 +335,25 @@ public sealed class UsageTemplate : MonoBehaviour
                 $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}");
     }
 
-    private void ItemPurchaseFailed(SaleableItem failedPurchaseItem)
+    private void ItemPurchaseFailed(SaleableItem failedPurchaseItem, ErrorTypes reason)
     {
-        Debug.LogError($"Failed to purchase an item {failedPurchaseItem.Name} for one of the following reasons");
+        Debug.LogError($"Failed to purchase an item {failedPurchaseItem.Name}, reason: {reason}");
     }
 }
 ```
 
 When called to open a **previously generated invoice**, you will be presented with a native Pop up window to make a payment, which you can close without payment or pay - the results of both cases will be processed by the SDK.
 
-### Payment refund
+P.S: If for some reason an attempt to pay a previously created invoice fails - the cdk will output the result in the `OnFullItemPurchaseFailed` event, where in addition to the configuration of the unsuccessfully purchased item the reason in `ErrorTypes` will be available.
 
-The following shows the implementation of a call to return a previously paid invoice:
+### Creating and paying invoice
+
+As of version `1.0.7`, a method is now available to immediately request the creation of an invoice based on the product configuration, and to open a payment window.
 
 ```c#
 public sealed class UsageTemplate : MonoBehaviour
 {
-    [SerializeField, Space] private Button _createInvoice;
-    [SerializeField] private Button _openInvoice;
-    [SerializeField] private Button _refundPayment;
+    [SerializeField, Space] private Button _payInvoice;
     [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
 
     private UnigramPaymentSDK _unigramPayment;
@@ -363,79 +365,34 @@ public sealed class UsageTemplate : MonoBehaviour
 
     private void OnDisable()
     {
-        _createInvoice.onClick.RemoveListener(CreateInvoice);
-        _openInvoice.onClick.RemoveListener(OpenInvoice);
-        _refundPayment.onClick.RemoveListener(Refund);
-
-        _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
-
-        _unigramPayment.OnInvoiceLinkCreated -= PaymentInvoiceCreated;
-        _unigramPayment.OnInvoiceLinkCreateFailed -= PaymentInvoiceCreateFailed;
+        _payInvoice.onClick.RemoveListener(PayInvoice);
 
         _unigramPayment.OnItemPurchased -= ItemPurchased;
-        _unigramPayment.OnItemPurchaseFailed -= ItemPurchaseFailed;
-
-        _unigramPayment.OnRefundTransactionFinished -= RefundTransactionFinished;
+        _unigramPayment.OnFullItemPurchaseFailed -= ItemPurchaseFailed;
     }
 
     private void Start()
     {
-        _createInvoice.onClick.AddListener(CreateInvoice);
-        _openInvoice.onClick.AddListener(OpenInvoice);
-        _refundPayment.onClick.AddListener(Refund);
+        _payInvoice.onClick.AddListener(PayInvoice);
 
         _unigramPayment = UnigramPaymentSDK.Instance;
 
-        _unigramPayment.OnInitialized += UnigramPaymentInitialized;
-
-        _unigramPayment.OnInvoiceLinkCreated += PaymentInvoiceCreated;
-        _unigramPayment.OnInvoiceLinkCreateFailed += PaymentInvoiceCreateFailed;
-
         _unigramPayment.OnItemPurchased += ItemPurchased;
-        _unigramPayment.OnItemPurchaseFailed += ItemPurchaseFailed;
-
-        _unigramPayment.OnRefundTransactionFinished += RefundTransactionFinished;
-
-        _unigramPayment.Initialize();
+        _unigramPayment.OnFullItemPurchaseFailed += ItemPurchaseFailed;
     }
 
-    private void CreateInvoice()
+    private void PayInvoice()
     {
+        if (!_unigramPayment.IsInitialized)
+        {
+             return;
+        }
+
         _itemForPurchase = _itemsStorage.Items[Random.Range(0, _itemsStorage.Items.Count - 1)];
 
         Debug.Log($"Claimed item with payload id: {_itemForPurchase.Id}");
 
-        _unigramPayment.CreateInvoice(_itemForPurchase);
-    }
-        
-    private void OpenInvoice()
-    {
-        _unigramPayment.OpenInvoice(_latestInvoice, _itemForPurchase.Id);
-    }
-
-    private void Refund()
-    {
-        _unigramPayment.Refund(_itemPaymentReceipt);
-    }
-
-    private void UnigramPaymentInitialized(bool isSuccess)
-    {
-        if (isSuccess)
-        {
-            Debug.Log("Success initialize Unigram Payment SDK");
-        }
-    }
-
-    private void PaymentInvoiceCreated(string itemPayloadId, string invoiceLink)
-    {
-        _latestInvoice = invoiceLink;
-
-        Debug.Log($"The link to purchase the test item {itemPayloadId} has been successfully generated: {url}");
-    }
-
-    private void PaymentInvoiceCreateFailed(string itemPayloadId)
-    {
-        Debug.LogError($"Failed to create a payment link for item {itemPayloadId} for one of the following reasons");
+        _unigramPayment.PayInvoice(_itemForPurchase);
     }
 
     private void ItemPurchased(PaymentReceiptData receipt)
@@ -447,9 +404,85 @@ public sealed class UsageTemplate : MonoBehaviour
                 $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}");
     }
 
-    private void ItemPurchaseFailed(SaleableItem failedPurchaseItem)
+    private void ItemPurchaseFailed(SaleableItem failedPurchaseItem, ErrorTypes reason)
     {
-        Debug.LogError($"Failed to purchase an item {failedPurchaseItem.Name} for one of the following reasons");
+        Debug.LogError($"Failed to purchase an item {failedPurchaseItem.Name}, reason: {reason}");
+    }
+}
+```
+
+**IMPORTANT:** It is recommended to display some sort **of loading screen before running** this method, as it may take some time to process before the payment window opens.
+
+### Payment refund
+
+The following shows the implementation of a call to return a previously paid invoice:
+
+```c#
+public sealed class UsageTemplate : MonoBehaviour
+{
+    [SerializeField, Space] private Button _refundPayment;
+    [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
+
+    private UnigramPaymentSDK _unigramPayment;
+
+    private PaymentReceiptData _itemPaymentReceipt;
+
+    private void OnDisable()
+    {
+        _refundPayment.onClick.RemoveListener(Refund);
+
+        _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
+
+        _unigramPayment.OnItemPurchased -= ItemPurchased;
+        _unigramPayment.OnFullItemPurchaseFailed -= ItemPurchaseFailed;
+
+        _unigramPayment.OnRefundTransactionFinished -= RefundTransactionFinished;
+        _unigramPayment.OnFullRefundTransactionFailed -= RefundTransactionFailed;
+    }
+
+    private void Start()
+    {
+        _refundPayment.onClick.AddListener(Refund);
+
+        _unigramPayment = UnigramPaymentSDK.Instance;
+
+        _unigramPayment.OnItemPurchased += ItemPurchased;
+        _unigramPayment.OnFullItemPurchaseFailed += ItemPurchaseFailed;
+
+        _unigramPayment.OnRefundTransactionFinished += RefundTransactionFinished;
+        _unigramPayment.OnFullRefundTransactionFailed += RefundTransactionFailed;
+    }
+
+    private void Refund()
+    {
+        if (!_unigramPayment.IsInitialized)
+        {
+            return;
+        }
+
+        _unigramPayment.Refund(_itemPaymentReceipt);
+    }
+
+    private void UnigramPaymentInitialized(bool isSuccess)
+    {
+        if (isSuccess)
+        {
+            Debug.Log("Success initialize Unigram Payment SDK");
+        }
+    }
+
+    private void ItemPurchased(PaymentReceiptData receipt)
+    {
+        _itemPaymentReceipt = receipt;
+
+        Debug.Log($"The item with identifier {_itemPaymentReceipt.InvoicePayload} " +
+                $"was successfully purchased for {_itemPaymentReceipt.Amount} " +
+                $"stars by the buyer with telegram id {_itemPaymentReceipt.BuyerId}");
+    }
+
+    private void ItemPurchaseFailed(SaleableItem failedPurchaseItem, ErrorTypes reason)
+    {
+        Debug.LogError($"Failed to purchase an item {failedPurchaseItem.Name}, reason: {reason}");
     }
 
     private void RefundTransactionFinished(string transactionId, bool isSuccess)
@@ -461,16 +494,25 @@ public sealed class UsageTemplate : MonoBehaviour
                     $"has been completed successfully");
         }
     }
+
+    private void RefundTransactionFailed(string transactionId, ErrorTypes reason)
+    {
+        Debug.LogError($"Failed to refund transaction by id: {transactionId}, reason: {reason}");
+    }
 }
 ```
 
 After you request a payment refund, the API server contacts the Telegram API for the specified `transaction id` and `buyer id`. The next step is to check if this payment from this user has been in your Telegram bot at all or if it has been previously refunded. After receiving the result, you can display some notification to the user about successful or unsuccessful refund.
+
+If the attempt to refund a payment fails, the cdk will return detailed information in the `OnFullRefundTransactionFailed` event with the failed transaction id and the reason in `ErrorTypes`.
 
 ### Access token update
 
 The API server access token has an expiration date, which you can change at your discretion in the `session.js` script on the server **(by default it is valid for an hour)**. 
 
 After this expires, access to the API for your Unity client is closed, and you need to upgrade. The SDK provides an **automatic token update** if a failed request to the server is made with the corresponding error **Unauthorized client, access denied**. 
+
+In case the client session expired while using the application, you can get its result in the form of an `ErrorTypes.SessionExpired` error in one of the methods that is related to processing a purchase invoice.
 
 If you want to manually refresh the access token, then call the `UnigramPaymentSDK.Instance.RefreshToken()` method and subscribe to the successful refresh result `UnigramPaymentSDK.Instance.OnSessionTokenRefreshed`.
 
