@@ -465,9 +465,9 @@ namespace UnigramPayment.Runtime.Core
                         }
 
                         OnItemPurchaseFail(_currentPurchaseItem, ErrorTypes.AttemptsExpired);
-
-                        return;
                     });
+
+                    return;
                 }
 
                 var parsedError = UnigramUtils.ParseErrorFromStatus(status);
@@ -535,6 +535,8 @@ namespace UnigramPayment.Runtime.Core
             {
                 _lastPaymentReceipt = receipt;
 
+                _currentResendAttemptsAmount = 0;
+
                 paymentReceiptDataClaimed?.Invoke(_lastPaymentReceipt);
 
                 UnigramPaymentLogger.Log($"Received data about the " +
@@ -558,8 +560,6 @@ namespace UnigramPayment.Runtime.Core
                     UnigramPaymentLogger.LogError($"Failed to receive " +
                         $"a check for payment for some reason");
                 }
-
-                _currentResendAttemptsAmount = 0;
 
                 GetPaymentReceipt(delay, userId, itemId, paymentReceiptDataClaimed);
             }));
