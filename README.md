@@ -361,8 +361,6 @@ public sealed class UsageTemplate : MonoBehaviour
     private SaleableItem _itemForPurchase;
     private PaymentReceiptData _itemPaymentReceipt;
 
-    private string _latestInvoice;
-
     private void OnDisable()
     {
         _payInvoice.onClick.RemoveListener(PayInvoice);
@@ -430,8 +428,6 @@ public sealed class UsageTemplate : MonoBehaviour
     private void OnDisable()
     {
         _refundPayment.onClick.RemoveListener(Refund);
-
-        _unigramPayment.OnInitialized -= UnigramPaymentInitialized;
 
         _unigramPayment.OnItemPurchased -= ItemPurchased;
         _unigramPayment.OnFullItemPurchaseFailed -= ItemPurchaseFailed;
