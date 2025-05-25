@@ -5,15 +5,11 @@ const webAppLibrary = {
     $webApp: {
         getAllocString: function(data)
         {
-            let ptr;
-
             if (typeof allocate === 'undefined')
             {
-                console.log(`[UNIGRAM PAYMENT] Detected Unity version 2023+`);
-
                 const length = lengthBytesUTF8(data) + 1;
 
-                ptr = _malloc(length);
+                let ptr = _malloc(length);
 
                 stringToUTF8(data, ptr, length);
 
@@ -21,6 +17,18 @@ const webAppLibrary = {
             }
 
             return allocate(intArrayFromString(data), 'i8', ALLOC_NORMAL);
+        },
+
+        sendToUnity: function(callId, callback, dataPtr)
+        {
+            dynCall(callId, callback, dataPtr);
+
+            if (callId === 'v')
+            {
+                return;
+            }
+
+            _free(dataPtr);
         },
 
         isTelegramApp: function()
@@ -163,16 +171,12 @@ const webAppLibrary = {
                         var paymentJson = JSON.stringify(event);
                         var paymentPtr = webApp.getAllocString(paymentJson);
 
-                        dynCall('vii', successCallbackPtr, [statusPtr, paymentPtr]);
-
-                        _free(paymentPtr);
+                        webApp.sendToUnity('vii', successCallbackPtr, [statusPtr, paymentPtr]);
 
                         return;
                     }
-                    
-                    dynCall('vi', errorCallbackPtr, [statusPtr]);
 
-                    _free(statusPtr);
+                    webApp.sendToUnity('vi', errorCallbackPtr, [statusPtr]);
                 });
             });
         }
