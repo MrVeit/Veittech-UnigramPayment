@@ -15,16 +15,13 @@ namespace TestExample
     {
         [SerializeField, Space] private UnigramPaymentSDK _unigramPayment;
         [SerializeField, Space] private TextMeshProUGUI _debugBar;
-        [SerializeField, Space] private Button _purchaseItemButton;
-        [SerializeField] private Button _fastPayItemButton;
+        [SerializeField, Space] private Button _fastPayItemButton;
         [SerializeField] private Button _refundStarsButton;
         [SerializeField, Space] private SaleableItemsStorage _itemsStorage;
         [SerializeField, Space] private TestTransactionPendingPopUp _pendingTransactionPopUp;
 
         private SaleableItem _randomItemForPurchase;
         private PaymentReceiptData _itemPaymentReceipt;
-
-        private string _latestInvoiceLink;
 
         private const string DEBUG_PREFIX = "DEBUG INFO:";
 
@@ -49,7 +46,6 @@ namespace TestExample
 
         private void OnDisable()
         {
-            _purchaseItemButton.onClick.RemoveListener(PurchaseItem);
             _fastPayItemButton.onClick.RemoveListener(FastPayItem);
             _refundStarsButton.onClick.RemoveListener(Refund);
 
@@ -79,23 +75,10 @@ namespace TestExample
         {
             ConfigureButtons();
 
-            SetInteractableStateByButton(_purchaseItemButton, false);
             SetInteractableStateByButton(_fastPayItemButton, false);
             SetInteractableStateByButton(_refundStarsButton, false);
 
             _unigramPayment.Initialize();
-        }
-
-        private void PurchaseItem()
-        {
-            _pendingTransactionPopUp.Show();
-
-            _unigramPayment.OpenInvoice(_latestInvoiceLink, _randomItemForPurchase.Id);
-        }
-
-        private void Refund()
-        {
-            _unigramPayment.Refund(_itemPaymentReceipt);
         }
 
         private void FastPayItem()
@@ -105,9 +88,20 @@ namespace TestExample
             _unigramPayment.PayInvoice(_randomItemForPurchase);
         }
 
+        private void Refund()
+        {
+            if (_itemPaymentReceipt == null)
+            {
+                Debug.LogWarning("Payment receipt for refund not found!");
+
+                return;
+            }
+
+            _unigramPayment.Refund(_itemPaymentReceipt);
+        }
+
         private void ConfigureButtons()
         {
-            _purchaseItemButton.onClick.AddListener(PurchaseItem);
             _fastPayItemButton.onClick.AddListener(FastPayItem);
             _refundStarsButton.onClick.AddListener(Refund);
         }
@@ -120,8 +114,9 @@ namespace TestExample
 
         private void SetRandomItemForPay()
         {
-            _randomItemForPurchase = _itemsStorage.Items[
-                Random.Range(0, _itemsStorage.Items.Count - 1)];
+            var randomId = Random.Range(0, _itemsStorage.Items.Count);
+
+            _randomItemForPurchase = _itemsStorage.Items[randomId];
 
             Debug.Log($"Claimed item with payload id: {_randomItemForPurchase.Id}");
         }
@@ -136,7 +131,8 @@ namespace TestExample
 
                 SetRandomItemForPay();
 
-                _unigramPayment.CreateInvoice(_randomItemForPurchase);
+                SetInteractableStateByButton(_fastPayItemButton, true);
+                SetInteractableStateByButton(_refundStarsButton, false);
 
                 _debugBar.text = $"{DEBUG_PREFIX} `Unigram Payment` has been successfully initialized." +
                     $" The process of creating a payment link for an item with an id: {_randomItemForPurchase.Id} has started.";
@@ -155,7 +151,6 @@ namespace TestExample
             _debugBar.text = $"{DEBUG_PREFIX} The session token, to connect to the server API," +
                 $" has been successfully updated.: {_unigramPayment.JwtToken}";
 
-            SetInteractableStateByButton(_purchaseItemButton, true);
             SetInteractableStateByButton(_fastPayItemButton, true);
             SetInteractableStateByButton(_refundStarsButton, false);
         }
@@ -165,30 +160,30 @@ namespace TestExample
             _debugBar.text = $"{DEBUG_PREFIX} Failed to update " +
                 $"the client session token for some reason";
 
-            SetInteractableStateByButton(_purchaseItemButton, false);
             SetInteractableStateByButton(_fastPayItemButton, false);
             SetInteractableStateByButton(_refundStarsButton, false);
         }
 
         private void PaymentInvoiceCreated(string itemPayloadId, string url)
         {
-            _latestInvoiceLink = url;
-
             _debugBar.text = $"{DEBUG_PREFIX} The link to purchase the" +
                 $" test item {itemPayloadId} has been successfully generated: {url}";
 
-            SetInteractableStateByButton(_purchaseItemButton, true);
-            SetInteractableStateByButton(_fastPayItemButton, true);
             SetInteractableStateByButton(_refundStarsButton, false);
         }
 
-        private void PaymentInvoiceCreateFailed(string itemPayloadId, ErrorTypes reason)
+        private void PaymentInvoiceCreateFailed(
+            string itemPayloadId, ErrorTypes reason)
         {
             _debugBar.text = $"{DEBUG_PREFIX} Failed to create " +
                 $"a payment link for item {itemPayloadId} by reason: {reason}";
+
+            SetInteractableStateByButton(_fastPayItemButton, false);
+            SetInteractableStateByButton(_refundStarsButton, false);
         }
 
-        private void TargetItemPurchased(PaymentReceiptData receipt)
+        private void TargetItemPurchased(
+            PaymentReceiptData receipt)
         {
             _itemPaymentReceipt = receipt;
 
@@ -199,14 +194,14 @@ namespace TestExample
                 $"purchased for {_itemPaymentReceipt.Amount} stars by " +
                 $"the buyer with telegram id {_itemPaymentReceipt.BuyerId}";
 
-            SetInteractableStateByButton(_purchaseItemButton, false);
             SetInteractableStateByButton(_fastPayItemButton, false);
             SetInteractableStateByButton(_refundStarsButton, true);
 
             SetRandomItemForPay();
         }
 
-        private void TargetItemPurchaseFailed(SaleableItem failedPurchaseItem, ErrorTypes reason)
+        private void TargetItemPurchaseFailed(
+            SaleableItem failedPurchaseItem, ErrorTypes reason)
         {
             _pendingTransactionPopUp.Hide();
 
@@ -214,7 +209,8 @@ namespace TestExample
                 $"an item {failedPurchaseItem.Name} by reason: {reason}";
         }
 
-        private void RefundTransactionFinished(string transactionId, bool isSuccess)
+        private void RefundTransactionFinished(
+            string transactionId, bool isSuccess)
         {
             if (isSuccess)
             {
@@ -222,7 +218,6 @@ namespace TestExample
                     $"the purchased stars through the transaction with the identifier " +
                     $"`{_unigramPayment.LastRefundedTransaction}` has been completed successfully";
 
-                SetInteractableStateByButton(_purchaseItemButton, true);
                 SetInteractableStateByButton(_fastPayItemButton, true);
                 SetInteractableStateByButton(_refundStarsButton, false);
 

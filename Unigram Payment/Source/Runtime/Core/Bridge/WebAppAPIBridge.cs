@@ -46,16 +46,12 @@ namespace UnigramPayment.Core
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void OnInvoiceSuccessfullyPaid(string status, string paymentReceipt)
         {
-            UnigramPaymentLogger.Log($"{nameof(WebAppAPIBridge)}.{nameof(OnInvoiceSuccessfullyPaid)} invoked");
-
             _onInvoiceSuccessfullyPaid?.Invoke(status, paymentReceipt);
         }
 
         [MonoPInvokeCallback(typeof(Action<string>))]
         private static void OnInvoicePayFailed(string status)
         {
-            UnigramPaymentLogger.Log($"{nameof(WebAppAPIBridge)}.{nameof(OnInvoicePayFailed)} invoked");
-
             _onInvoicePayFailed?.Invoke(status);
         }
 

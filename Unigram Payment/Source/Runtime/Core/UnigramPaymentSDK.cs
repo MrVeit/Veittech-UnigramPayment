@@ -464,7 +464,8 @@ namespace UnigramPayment.Runtime.Core
                             return;
                         }
 
-                        OnItemPurchaseFail(_currentPurchaseItem, ErrorTypes.AttemptsExpired);
+                        OnItemPurchaseFail(_currentPurchaseItem, 
+                            ErrorTypes.AttemptsExpired);
                     });
 
                     return;
@@ -493,8 +494,8 @@ namespace UnigramPayment.Runtime.Core
                 return;
             }
 
-            WebAppAPIBridge.OpenPurchaseInvoice(invoiceLink,
-            (status, resultPayment) =>
+            WebAppAPIBridge.OpenPurchaseInvoice(
+                invoiceLink, (status, resultPayment) =>
             {
                 var parsedStatus = UnigramUtils.ParsePaymentStatusAfterPurchase(status);
 
@@ -545,11 +546,11 @@ namespace UnigramPayment.Runtime.Core
             },
             (errorReason) =>
             {
-                UnigramPaymentLogger.LogWarning($"Starting resend response " +
-                    $"for fetch payment receipt with attemp: " +
-                    $"{_currentResendAttemptsAmount}");
-
                 _currentResendAttemptsAmount++;
+
+                UnigramPaymentLogger.LogWarning($"Starting resend response " +
+                    $"for fetch payment receipt with attempt: " +
+                    $"{_currentResendAttemptsAmount}");
 
                 if (_currentResendAttemptsAmount > _resendAttemptsAmount)
                 {
@@ -559,6 +560,8 @@ namespace UnigramPayment.Runtime.Core
 
                     UnigramPaymentLogger.LogError($"Failed to receive " +
                         $"a check for payment for some reason");
+
+                    return;
                 }
 
                 GetPaymentReceipt(delay, userId, itemId, paymentReceiptDataClaimed);

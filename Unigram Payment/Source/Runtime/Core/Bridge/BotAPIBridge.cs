@@ -318,10 +318,10 @@ namespace UnigramPayment.Core
 
             UnigramPaymentLogger.Log($"Product data for confirm purchase: {jsonPayload}");
 
+            var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(jsonPayload);
+
             using (UnityWebRequest request = new(url, UnityWebRequest.kHttpVerbPOST))
             {
-                var bodyRaw = WebRequestUtils.GetBytesFromJsonUTF8(jsonPayload);
-
                 WebRequestUtils.SetUploadHandler(request,
                     WebRequestUtils.GetUploadHandlerRaw(bodyRaw));
                 WebRequestUtils.SetDownloadHandler(request, new DownloadHandlerBuffer());
@@ -337,6 +337,13 @@ namespace UnigramPayment.Core
                 {
                     var responseResult = request.downloadHandler.text;
                     var receipt = JsonConvert.DeserializeObject<PaymentReceiptData>(responseResult);
+
+                    if (receipt == null)
+                    {
+                        UnigramPaymentLogger.LogWarning("Target transaction not found, something wrong...");
+
+                        paymentReceiptClaimed?.Invoke(null);
+                    }
 
                     UnigramPaymentLogger.Log($"Customer transaction data " +
                         $"{responseResult} has been successfully uploaded.");
