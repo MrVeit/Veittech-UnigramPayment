@@ -132,7 +132,7 @@ namespace TestExample
                 SetRandomItemForPay();
 
                 SetInteractableStateByButton(_fastPayItemButton, true);
-                SetInteractableStateByButton(_fastPayItemButton, false);
+                SetInteractableStateByButton(_refundStarsButton, false);
 
                 _debugBar.text = $"{DEBUG_PREFIX} `Unigram Payment` has been successfully initialized." +
                     $" The process of creating a payment link for an item with an id: {_randomItemForPurchase.Id} has started.";
