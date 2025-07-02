@@ -131,6 +131,9 @@ namespace TestExample
 
                 SetRandomItemForPay();
 
+                SetInteractableStateByButton(_fastPayItemButton, true);
+                SetInteractableStateByButton(_fastPayItemButton, false);
+
                 _debugBar.text = $"{DEBUG_PREFIX} `Unigram Payment` has been successfully initialized." +
                     $" The process of creating a payment link for an item with an id: {_randomItemForPurchase.Id} has started.";
 
@@ -166,7 +169,6 @@ namespace TestExample
             _debugBar.text = $"{DEBUG_PREFIX} The link to purchase the" +
                 $" test item {itemPayloadId} has been successfully generated: {url}";
 
-            SetInteractableStateByButton(_fastPayItemButton, true);
             SetInteractableStateByButton(_refundStarsButton, false);
         }
 
@@ -175,6 +177,9 @@ namespace TestExample
         {
             _debugBar.text = $"{DEBUG_PREFIX} Failed to create " +
                 $"a payment link for item {itemPayloadId} by reason: {reason}";
+
+            SetInteractableStateByButton(_fastPayItemButton, false);
+            SetInteractableStateByButton(_refundStarsButton, false);
         }
 
         private void TargetItemPurchased(
