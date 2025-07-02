@@ -23,6 +23,8 @@ Install the following plugins/libraries for the SDK to work correctly:
 
 - **[Newtonsoft](https://www.youtube.com/watch?v=3H6xkl_EsvQ)** - modern solution for convenient work with json files.
 
+**P.S:** Newtonsoft 3.2+ adds 2.5 MB to the web build, but if you don't need the new features or complex types in your project, I RECOMMEND using the [10-year-old version](https://github.com/SaladLab/Json.Net.Unity3D) (adds only 350-500 KB, depending on the package type).
+
 # Installation
 
 **[Download the latest version of the SDK via the .unityPackage file here](https://github.com/MrVeit/Veittech-UnigramPayment/releases).**
