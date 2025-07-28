@@ -21,7 +21,14 @@ const webAppLibrary = {
 
         sendToUnity: function(callId, callback, dataPtr)
         {
-            dynCall(callId, callback, dataPtr);
+            if (typeof dynCall !== 'undefined') {
+                dynCall(callId, callback, dataPtr);
+            } else if (typeof wasmTable !== 'undefined') {
+                // dynCall was deprecated in newer Emscripten versions used by modern Unity WebGL builds.
+                wasmTable.get(callback).apply(null, dataPtr);
+            } else {
+                return;
+            }
 
             if (callId === 'v')
             {
