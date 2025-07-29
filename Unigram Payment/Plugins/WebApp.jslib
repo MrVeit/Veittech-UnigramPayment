@@ -19,32 +19,6 @@ const webAppLibrary = {
             return allocate(intArrayFromString(data), 'i8', ALLOC_NORMAL);
         },
 
-        sendToUnity: function(callId, callback, dataPtr)
-        {
-            if (typeof wasmTable !== 'undefined')
-            {
-                wasmTable.get(callback).apply(null, dataPtr);
-
-                return;
-            }
-
-            if (typeof dynCall !== 'undefined')
-            {
-                dynCall(callId, callback, dataPtr);
-            }
-            else
-            {
-                return;
-            }
-
-            if (callId === 'v')
-            {
-                return;
-            }
-
-            _free(dataPtr);
-        },
-
         isTelegramApp: function()
         {
             return typeof Telegram !== 'undefined' && Telegram.WebApp !== null;
@@ -185,12 +159,18 @@ const webAppLibrary = {
                         var paymentJson = JSON.stringify(event);
                         var paymentPtr = webApp.getAllocString(paymentJson);
 
-                        webApp.sendToUnity('vii', successCallbackPtr, [statusPtr, paymentPtr]);
+                        {{{ makeDynCall('vii', 'successCallbackPtr') }}}(statusPtr, paymentPtr);
+
+                        _free(statusPtr);
+                        _free(paymentPtr);
 
                         return;
                     }
 
-                    webApp.sendToUnity('vi', errorCallbackPtr, [statusPtr]);
+                    
+                    {{{ makeDynCall('vi', 'errorCallbackPtr') }}}(statusPtr);
+
+                    _free(statusPtr);
                 });
             });
         }
