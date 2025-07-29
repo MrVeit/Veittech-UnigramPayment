@@ -21,12 +21,19 @@ const webAppLibrary = {
 
         sendToUnity: function(callId, callback, dataPtr)
         {
-            if (typeof dynCall !== 'undefined') {
-                dynCall(callId, callback, dataPtr);
-            } else if (typeof wasmTable !== 'undefined') {
-                // dynCall was deprecated in newer Emscripten versions used by modern Unity WebGL builds.
+            if (typeof wasmTable !== 'undefined')
+            {
                 wasmTable.get(callback).apply(null, dataPtr);
-            } else {
+
+                return;
+            }
+
+            if (typeof dynCall !== 'undefined')
+            {
+                dynCall(callId, callback, dataPtr);
+            }
+            else
+            {
                 return;
             }
 
@@ -47,7 +54,7 @@ const webAppLibrary = {
         {
             if (!webApp.isTelegramApp())
             {
-                console.error("[UNIGRAM PAYMENT] Failed to claim unsafe init data");
+                console.error("[Unigram Payment] Failed to claim unsafe init data");
 
                 return webApp.getAllocString("");
             }
@@ -56,7 +63,7 @@ const webAppLibrary = {
 
             if (initDataUnsafe == null)
             {
-                console.error("[UNIGRAM PAYMENT] Failed to claim "+
+                console.error("[Unigram Payment] Failed to claim "+
                     "unsafe init data, because is null");
 
                 return webApp.getAllocString("");
@@ -64,7 +71,7 @@ const webAppLibrary = {
 
             if (initDataUnsafe.user == null)
             {
-                console.error("[UNIGRAM PAYMENT] Failed to parse "+
+                console.error("[Unigram Payment] Failed to parse "+
                     "user data in unsafe init data");
 
                 return webApp.getAllocString("");
@@ -81,7 +88,7 @@ const webAppLibrary = {
 
             var jsonString = JSON.stringify(filteredData);
 
-            console.log(`[UNIGRAM PAYMENT] Successfully claimed unsafe init data: ${jsonString}`);
+            console.log(`[Unigram Payment] Successfully claimed unsafe init data: ${jsonString}`);
 
             return webApp.getAllocString(jsonString);
         },
